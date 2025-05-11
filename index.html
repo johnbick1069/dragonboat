@@ -4,8 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dragon Boat Lineup Generator</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
-    <link rel="stylesheet" href="dragon-boat-lineup-css.css">
+    <!-- CSS files -->
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/boat.css">
+    <link rel="stylesheet" href="css/paddlers.css">
+    <link rel="stylesheet" href="css/simplified-lineup.css">
 </head>
 <body>
     <div class="container">
@@ -51,16 +54,13 @@
                     <button id="balanceBoat" class="warning">Balance Boat</button>
                 </div>
 
-                <div class="export-section">
-                    <h3>Export Lineup</h3>
-                    <button id="exportLineup" class="primary">Export Lineup CSV</button>
-                </div>
             </div>
 
             <div class="main-content">
                 <h2>Boat Layout</h2>
-                <p>Drag paddlers from the list to place them in seats. Right-click on a seat to fix/unfix position.</p>
-                
+                <p>Drag paddlers from the list to place them in seats or add them from the dropdown list. Right-click on a seat to fix/unfix position.</p>
+                <p>Lineup All will try to line up everyone in the list, Balance Boat will only balance the boat based on the paddlers added in the seats</p>
+
                 <div class="boat-container">
                     <div class="boat-header">
                         <h3>Dragon Boat</h3>
@@ -92,7 +92,35 @@
     </div>
 
     <input type="file" id="csvFileInput" accept=".csv" style="display: none;">
-    
-    <script src="dragon-boat-lineup-js.js"></script>
+        <div class="container">
+        <div class="header">
+            <!-- existing header content -->
+        </div>
+
+        <div class="app-layout">
+            <!-- existing app layout content -->
+        </div>
+
+        <!-- Add the footnote here, before the closing div.container -->
+        <footer class="page-footer">
+            <p>Dragon Boat Lineup Generator | Created by Lihao Zhang from Wuhan United/Boston Storm Dragon Boat Club | Version 1.0.0</p>
+            <p class="footer-note">© 2025 - This tool helps optimize dragon boat team performance by balancing paddler weight and position</p>
+        </footer>
+    </div>
+
+    <input type="file" id="csvFileInput" accept=".csv" style="display: none;">
+    <!-- JavaScript modules -->
+    <script src="js/models/paddler.js"></script>
+    <script src="js/models/boat.js"></script>
+    <script src="js/utils/helpers.js"></script>
+    <script src="js/utils/drag-drop.js"></script>
+    <script src="js/services/storage.js"></script>
+    <script src="js/services/import-export.js"></script>
+    <script src="js/services/boat-balancer.js"></script>
+    <script src="js/ui/paddler-list.js"></script>
+    <script src="js/ui/boat-layout.js"></script>
+    <script src="js/ui/simplified-lineup.js"></script>
+    <script src="js/ui/statistics.js"></script>
+    <script src="js/app.js"></script>
 </body>
 </html>
