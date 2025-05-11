@@ -1,0 +1,78 @@
+/* Simplified lineup table styles */
+.simplified-lineup {
+    margin-top: 20px;
+    padding: 8px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.simplified-lineup h3 {
+    margin-top: 0;
+    margin-bottom: 8px;
+    text-align: center;
+    color: #333;
+    font-size: 1em;
+}
+
+.simplified-boat-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85em;
+    table-layout: fixed; /* This ensures columns have exact widths */
+}
+
+.simplified-boat-table th {
+    padding: 4px;
+    background-color: #e9ecef;
+    font-weight: 600;
+    text-align: center;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.simplified-boat-table td {
+    padding: 3px 4px;
+    text-align: center;
+    border-bottom: 1px solid #eee;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100px;
+}
+
+.simplified-boat-table .row-number {
+    position: static; /* Override the absolute positioning */
+    background-color: #f1f3f5;
+    font-weight: bold;
+    width: 30px;
+    transform: none; /* Remove the transform that's affecting positioning */
+    border: none;
+    border-radius: 0;
+    display: table-cell; /* Proper display for table cells */
+    height: auto;
+    left: auto;
+    top: auto;
+}
+
+.simplified-boat-table td.fixed {
+    font-weight: normal;
+    background-color: #f8f9fa;
+}
+
+.simplified-boat-table .empty {
+    color: #adb5bd;
+}
+
+/* Fix the simplified boat table layout to make left and right columns equal width */
+.simplified-boat-table th:first-child,
+.simplified-boat-table th:last-child,
+.simplified-boat-table td:first-child,
+.simplified-boat-table td:last-child {
+    width: 45%; /* Make both sides equal width */
+}
+
+.simplified-boat-table .row-number,
+.simplified-boat-table th:nth-child(2),
+.simplified-boat-table td:nth-child(2) {
+    width: 10%; /* Make the middle column smaller */
+}
