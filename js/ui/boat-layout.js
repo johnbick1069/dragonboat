@@ -61,6 +61,19 @@ function createSeatElement(rowIndex, seatIndex) {
     });
     seatElement.appendChild(dropdownButton);
     
+    // Add fix/unfix button for mobile compatibility
+    const fixButton = document.createElement('button');
+    fixButton.className = 'seat-fix-button';
+    fixButton.innerHTML = '<i class="fix-icon">📌</i>';
+    fixButton.title = 'Tap to fix/unfix position';
+    fixButton.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const row = parseInt(seatElement.dataset.row);
+        const seat = parseInt(seatElement.dataset.seat);
+        toggleSeatFixed(row, seat);
+    });
+    seatElement.appendChild(fixButton);
+    
     // Event listeners for drag and drop
     seatElement.addEventListener('dragover', handleDragOver);
     seatElement.addEventListener('dragleave', handleDragLeave);
@@ -70,7 +83,7 @@ function createSeatElement(rowIndex, seatIndex) {
         e.preventDefault();
     });
     
-    // Right-click to fix/unfix seat
+    // Right-click to fix/unfix seat (keep for desktop compatibility)
     seatElement.addEventListener('contextmenu', function(e) {
         e.preventDefault();
         const row = parseInt(this.dataset.row);
@@ -104,6 +117,19 @@ function updateBoatLayout() {
                 showPaddlerDropdown(i, j, seatElement);
             });
             seatElement.appendChild(dropdownButton);
+            
+            // Add fix/unfix button
+            const fixButton = document.createElement('button');
+            fixButton.className = 'seat-fix-button';
+            fixButton.innerHTML = '<i class="fix-icon">📌</i>';
+            fixButton.title = 'Tap to fix/unfix position';
+            fixButton.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const row = parseInt(seatElement.dataset.row);
+                const seat = parseInt(seatElement.dataset.seat);
+                toggleSeatFixed(row, seat);
+            });
+            seatElement.appendChild(fixButton);
             
             // Check if this seat is fixed
             const seatPosition = `${i}-${j}`;

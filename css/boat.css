@@ -304,3 +304,63 @@
     background-color: var(--danger-color);
     color: white;
 }
+
+/* Add these styles to boat.css */
+
+/* Fix button styles */
+.seat-fix-button {
+    position: absolute;
+    top: 5px;
+    right: 30px; /* Position it to the left of the dropdown button */
+    background-color: rgba(255, 255, 255, 0.7);
+    border: 1px solid var(--border-color);
+    border-radius: 3px;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    opacity: 0.6;
+    transition: opacity 0.2s, background-color 0.2s;
+    z-index: 3;
+}
+
+.seat:hover .seat-fix-button {
+    opacity: 1;
+}
+
+.seat-fix-button:hover {
+    background-color: var(--primary-color);
+}
+
+.seat.fixed .seat-fix-button {
+    opacity: 1;
+    background-color: var(--success-color);
+    color: white;
+}
+
+/* Move the remove button position to account for the fix button */
+.remove-paddler-button {
+    right: 55px; /* Moved further to the left to make room for both buttons */
+}
+
+/* Make buttons more touch-friendly on mobile */
+@media (max-width: 768px) {
+    .seat-dropdown-button,
+    .seat-fix-button,
+    .remove-paddler-button {
+        width: 32px;
+        height: 32px;
+        opacity: 1;
+    }
+    
+    .seat-fix-button {
+        right: 36px;
+    }
+    
+    .remove-paddler-button {
+        right: 72px;
+    }
+}
