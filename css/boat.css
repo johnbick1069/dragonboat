@@ -364,3 +364,26 @@
         right: 72px;
     }
 }
+
+/* Add these styles at the end of boat.css */
+
+.boat-controls {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 15px;
+}
+
+.boat-controls button {
+    margin-left: 10px;
+}
+
+@media (max-width: 768px) {
+    .boat-controls {
+        justify-content: center;
+    }
+    
+    .boat-controls button {
+        padding: 10px 16px;
+        font-size: 16px;
+    }
+}
