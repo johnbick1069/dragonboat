@@ -8,6 +8,10 @@ function updateBoatStatistics() {
     let leftWeight = 0;
     let rightWeight = 0;
     let filledSeats = 0;
+
+    // New: front/back weights
+    let frontWeight = 0;
+    let backWeight = 0;
     
     // Calculate total weights for each side and count filled seats
     for (let i = 0; i < 10; i++) {
@@ -18,6 +22,12 @@ function updateBoatStatistics() {
                     leftWeight += boat[i][j].weight;
                 } else { // Right side
                     rightWeight += boat[i][j].weight;
+                }
+                // Front/back calculation
+                if (i < 5) {
+                    frontWeight += boat[i][j].weight;
+                } else {
+                    backWeight += boat[i][j].weight;
                 }
             }
         }
@@ -41,4 +51,23 @@ function updateBoatStatistics() {
     
     // Update filled seats counter
     filledSeatsElement.textContent = `${filledSeats}/20`;
+
+    // --- New: Front/Back weights and difference ---
+    let frontWeightElement = document.getElementById('frontWeight');
+    let backWeightElement = document.getElementById('backWeight');
+    let frontBackDiffElement = document.getElementById('frontBackDiff');
+
+    if (frontWeightElement && backWeightElement && frontBackDiffElement) {
+        frontWeightElement.textContent = frontWeight.toFixed(1) + ' kg';
+        backWeightElement.textContent = backWeight.toFixed(1) + ' kg';
+        const frontBackDiff = Math.abs(frontWeight - backWeight);
+        frontBackDiffElement.textContent = frontBackDiff.toFixed(1) + ' kg';
+        if (frontBackDiff < 5) {
+            frontBackDiffElement.classList.add('balanced');
+            frontBackDiffElement.classList.remove('unbalanced');
+        } else {
+            frontBackDiffElement.classList.add('unbalanced');
+            frontBackDiffElement.classList.remove('balanced');
+        }
+    }
 }
