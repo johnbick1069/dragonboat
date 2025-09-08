@@ -11,10 +11,15 @@ function renderPaddlerList() {
     // Show all paddlers, but mark those in the boat as "in-boat"
     paddlers.forEach(paddler => {
         const isInBoat = isPaddlerInBoat(paddler);
-        const paddlerElement = document.createElement('div');
-        paddlerElement.className = 'paddler-item';
+        const paddlerElement = document.createElement('div');        paddlerElement.className = 'paddler-item';
         if (isInBoat) {
             paddlerElement.classList.add('in-boat');
+        }
+        // Add gender class for styling
+        if (paddler.gender === 'M') {
+            paddlerElement.classList.add('male');
+        } else if (paddler.gender === 'F') {
+            paddlerElement.classList.add('female');
         }
         paddlerElement.draggable = true;
         paddlerElement.dataset.id = paddler.id;
@@ -24,7 +29,7 @@ function renderPaddlerList() {
         paddlerElement.innerHTML = `
             <div>
                 <div class="paddler-name">${paddler.name}</div>
-                <div class="paddler-details">${paddler.weight} kg</div>
+                <div class="paddler-details">${paddler.weight} kg | ${paddler.gender || 'M'}</div>
             </div>
             <div>
                 <span class="paddler-side ${sideClass}" data-id="${paddler.id}">${paddler.side}</span>

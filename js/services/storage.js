@@ -21,18 +21,26 @@ function loadFromLocalStorage() {
         const savedData = localStorage.getItem('dragonBoatData');
         if (savedData) {
             const data = JSON.parse(savedData);
-            
-            // Load paddlers
+              // Load paddlers
             if (Array.isArray(data.paddlers)) {
                 paddlers.length = 0; // Clear existing
-                data.paddlers.forEach(p => paddlers.push(p));
+                data.paddlers.forEach(p => {
+                    // Add default gender for backward compatibility
+                    if (!p.gender) {
+                        p.gender = 'M';
+                    }
+                    paddlers.push(p);
+                });
             }
-            
-            // Load boat configuration
+              // Load boat configuration
             if (Array.isArray(data.boat)) {
                 for (let i = 0; i < 10; i++) {
                     for (let j = 0; j < 2; j++) {
-                        boat[i][j] = data.boat[i] && data.boat[i][j] ? data.boat[i][j] : null;
+                        const paddler = data.boat[i] && data.boat[i][j] ? data.boat[i][j] : null;
+                        if (paddler && !paddler.gender) {
+                            paddler.gender = 'M'; // Add default gender for backward compatibility
+                        }
+                        boat[i][j] = paddler;
                     }
                 }
             }

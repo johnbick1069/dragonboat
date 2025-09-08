@@ -1,12 +1,12 @@
 // Import and export functionality
 
 // Export team to CSV file
-function exportTeam() {
-    // Prepare data for Papa Parse
+function exportTeam() {    // Prepare data for Papa Parse
     const csvData = paddlers.map(paddler => ({
         Name: paddler.name,
         Weight: paddler.weight,
-        Side: paddler.side
+        Side: paddler.side,
+        Gender: paddler.gender || 'M'
     }));
     
     // Use Papa Parse to generate CSV with proper escaping
@@ -82,15 +82,14 @@ function importTeam(e) {
             
             let importedCount = 0;
             let updatedCount = 0;
-            let errorCount = 0;
-            
-            // Process each row
+            let errorCount = 0;                // Process each row
             results.data.forEach((row, index) => {
                 try {
                     // Support multiple possible column names (flexible header matching)
                     const name = (row.name || row.paddler || row['paddler name'] || '').trim();
                     const weightStr = (row.weight || row.kg || row['weight (kg)'] || '').toString().trim();
                     const side = (row.side || row.position || row.preference || '').toString().toLowerCase().trim();
+                    const gender = (row.gender || row.sex || row.m_f || row['m/f'] || 'M').toString().toUpperCase().trim();
                     
                     // Validate required fields
                     if (!name) {
@@ -121,6 +120,16 @@ function importTeam(e) {
                         normalizedSide = 'both';
                     }
                     
+                    // Normalize and validate gender
+                    let normalizedGender = gender;
+                    if (gender === 'M' || gender === 'MALE' || gender === 'MAN') {
+                        normalizedGender = 'M';
+                    } else if (gender === 'F' || gender === 'FEMALE' || gender === 'WOMAN') {
+                        normalizedGender = 'F';
+                    } else {
+                        console.warn(`Row ${index + 2}: Invalid gender "${gender}" for ${name}, defaulting to "M"`);
+                        normalizedGender = 'M';                    }
+                    
                     // Check if paddler already exists (case-insensitive)
                     const existingPaddler = existingPaddlers[name.toLowerCase()];
                     
@@ -128,6 +137,7 @@ function importTeam(e) {
                         // Update existing paddler
                         existingPaddler.weight = weight;
                         existingPaddler.side = normalizedSide;
+                        existingPaddler.gender = normalizedGender;
                         updatedCount++;
                     } else {
                         // Add new paddler
@@ -135,7 +145,8 @@ function importTeam(e) {
                             id: Date.now() + Math.random(), // Ensure unique ID
                             name,
                             weight,
-                            side: normalizedSide
+                            side: normalizedSide,
+                            gender: normalizedGender
                         };
                         paddlers.push(paddler);
                         existingPaddlers[name.toLowerCase()] = paddler;

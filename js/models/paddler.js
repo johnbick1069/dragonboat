@@ -5,10 +5,12 @@ function addPaddler() {
     const paddlerNameInput = document.getElementById('paddlerName');
     const paddlerWeightInput = document.getElementById('paddlerWeight');
     const paddlerSideSelect = document.getElementById('paddlerSide');
+    const paddlerGenderSelect = document.getElementById('paddlerGender');
     
     const name = paddlerNameInput.value.trim();
     const weight = parseFloat(paddlerWeightInput.value);
     const side = paddlerSideSelect.value;
+    const gender = paddlerGenderSelect.value;
     
     if (!name) {
         alert('Please enter a paddler name.');
@@ -24,7 +26,8 @@ function addPaddler() {
         id: Date.now(),
         name,
         weight,
-        side
+        side,
+        gender
     };
     
     paddlers.push(paddler);
@@ -35,6 +38,7 @@ function addPaddler() {
     paddlerNameInput.value = '';
     paddlerWeightInput.value = '';
     paddlerSideSelect.value = 'left';
+    paddlerGenderSelect.value = 'M';
 }
 
 // Function to check if a paddler is in the boat
@@ -167,8 +171,7 @@ function showEditPaddlerModal(id) {
         const modal = document.createElement('div');
         modal.id = 'editPaddlerModal';
         modal.className = 'modal';
-        
-        modal.innerHTML = `
+          modal.innerHTML = `
             <div class="modal-content">
                 <span class="close">&times;</span>
                 <h2>Edit Paddler</h2>
@@ -186,6 +189,13 @@ function showEditPaddlerModal(id) {
                         <option value="left">Left</option>
                         <option value="right">Right</option>
                         <option value="both">Both</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="editPaddlerGender">Gender</label>
+                    <select id="editPaddlerGender">
+                        <option value="M">Male (M)</option>
+                        <option value="F">Female (F)</option>
                     </select>
                 </div>
                 <button id="savePaddlerChanges" class="primary">Save Changes</button>
@@ -207,27 +217,28 @@ function showEditPaddlerModal(id) {
             }
         });
     }
-    
-    // Update modal with paddler info
+      // Update modal with paddler info
     const modal = document.getElementById('editPaddlerModal');
     const nameInput = document.getElementById('editPaddlerName');
     const weightInput = document.getElementById('editPaddlerWeight');
     const sideSelect = document.getElementById('editPaddlerSide');
+    const genderSelect = document.getElementById('editPaddlerGender');
     
     nameInput.value = paddler.name;
     weightInput.value = paddler.weight;
     sideSelect.value = paddler.side;
+    genderSelect.value = paddler.gender || 'M';
     
     // Remove old save handler
     const saveBtn = document.getElementById('savePaddlerChanges');
     const newSaveBtn = saveBtn.cloneNode(true);
     saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
-    
-    // Add new save handler
+      // Add new save handler
     newSaveBtn.addEventListener('click', function() {
         const name = nameInput.value.trim();
         const weight = parseFloat(weightInput.value);
         const side = sideSelect.value;
+        const gender = genderSelect.value;
         
         if (!name) {
             alert('Please enter a paddler name.');
@@ -238,10 +249,10 @@ function showEditPaddlerModal(id) {
             alert('Please enter a valid weight.');
             return;
         }
-        
-        // Update paddler data
+          // Update paddler data
         paddler.name = name;
         paddler.weight = weight;
+        paddler.gender = gender;
         
         // If side changed, check if in boat
         if (paddler.side !== side) {
@@ -266,7 +277,7 @@ function showEditPaddlerModal(id) {
         // Hide modal
         modal.style.display = 'none';
         
-        // Update UI
+        // Update UI - ensure all components are refreshed
         updateAndSave();
     });
     

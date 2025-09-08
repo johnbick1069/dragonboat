@@ -18,6 +18,15 @@
     align-items: center;
 }
 
+/* Gender-based styling for paddlers in the list - only text color */
+.paddler-item.male .paddler-name {
+    color: #1976d2; /* Blue text for males */
+}
+
+.paddler-item.female .paddler-name {
+    color: #d63384; /* Muted pink text for females */
+}
+
 .paddler-item:hover {
     background-color: #f0f8ff;
 }
@@ -107,4 +116,61 @@
 
 .edit-paddler:hover {
     background-color: #138496;
+}
+
+/* Danger section styles */
+.danger-section {
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 2px solid var(--danger-color);
+    background-color: #fff5f5;
+    border-radius: 6px;
+    padding: 16px;
+}
+
+.danger-section button {
+    width: 100%;
+    background-color: var(--danger-color);
+    color: white;
+    font-weight: 600;
+    padding: 12px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+.danger-section button:hover {
+    background-color: #c82333;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
+}
+
+.danger-section button:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(220, 53, 69, 0.3);
+}
+
+/* Tools section styles */
+.tools-section {
+    margin-top: 24px;
+    padding: 16px;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+}
+
+.tools-section h3 {
+    margin-bottom: 12px;
+    color: var(--primary-color);
+    font-size: 16px;
+}
+
+.tools-section button {
+    width: 100%;
+    margin-bottom: 8px;
+}
+
+.tools-section button:last-child {
+    margin-bottom: 0;
 }

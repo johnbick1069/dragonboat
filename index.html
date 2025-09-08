@@ -31,8 +31,7 @@
                 <div class="form-group">
                     <label for="paddlerWeight">Weight (kg)</label>
                     <input type="number" id="paddlerWeight" placeholder="Enter weight in kg" min="30" max="200">
-                </div>
-                <div class="form-group">
+                </div>                <div class="form-group">
                     <label for="paddlerSide">Paddle Side</label>
                     <select id="paddlerSide">
                         <option value="left">Left</option>
@@ -40,65 +39,88 @@
                         <option value="both">Both</option>
                     </select>
                 </div>
-                <button id="addPaddler" class="success">Add Paddler</button>
-                <button id="clearPaddlers" class="warning">Clear Paddlers</button>
+                <div class="form-group">
+                    <label for="paddlerGender">Gender</label>
+                    <select id="paddlerGender">
+                        <option value="M">Male (M)</option>
+                        <option value="F">Female (F)</option>
+                    </select>
+                </div><button id="addPaddler" class="success">Add Paddler</button>
+                
                 <h3>Available Paddlers</h3>
                 <div class="paddler-list" id="paddlerList">
                     <div class="empty-message">No paddlers added yet</div>
-                </div>
-
-                <div class="tools-section">
+                </div>                <div class="tools-section">
                     <h3>Tools</h3>
                     <button id="autoGenerateLineup" class="primary">Lineup All</button>
                     <button id="balanceBoat" class="warning">Balance Boat</button>
                 </div>
 
-            </div>            <div class="main-content">
-                <h2>Boat Layout</h2>
-                <div class="boat-controls">
-                    <!-- Added clearAll button here -->
-                    <button id="clearAll" class="danger">Clear Lineup</button>
+                <div class="danger-section">
+                    <button id="clearPaddlers" class="danger">Delete ALL Paddlers</button>
                 </div>
-                <p>Drag paddlers from the list to place them in seats or add them from the dropdown list. Right-click on a seat to fix/unfix position.</p>
-                <p>Lineup All will try to line up everyone in the list, Balance Boat will only balance the boat based on the paddlers added in the seats</p>
 
-                <div class="boat-container">
-                    <div class="boat-header">
-                        <h3>Dragon Boat</h3>
-                        <div class="boat-statistics">
+            </div>            <div class="main-content">
+                <div class="boat-section-header">
+                    <h2>Dragon Boat Lineup</h2>
+                    <button id="clearAll" class="btn-clear-lineup">Clear Lineup</button>
+                </div>
+                
+                <div class="instructions-panel">
+                    <div class="instruction-item">
+                        <span class="instruction-icon">🖱️</span>
+                        <span>Drag paddlers from the list or use dropdown menus to assign seats</span>
+                    </div>
+                    <div class="instruction-item">
+                        <span class="instruction-icon">📌</span>
+                        <span>Click pin button or right-click to fix/unfix positions</span>
+                    </div>
+                    <div class="instruction-item">
+                        <span class="instruction-icon">⚖️</span>
+                        <span><strong>Lineup All:</strong> assigns all paddlers | <strong>Balance Boat:</strong> optimizes current lineup</span>
+                    </div>
+                </div>                <div class="boat-container">
+                    <div class="boat-statistics-panel">
+                        <div class="stats-compact">
                             <div class="stat-item">
                                 <span class="stat-value" id="leftWeight">0</span>
-                                <span class="stat-label">Left Weight (kg)</span>
+                                <span class="stat-label">Left</span>
                             </div>
                             <div class="stat-item">
                                 <span class="stat-value" id="rightWeight">0</span>
-                                <span class="stat-label">Right Weight (kg)</span>
+                                <span class="stat-label">Right</span>
                             </div>
-                            <div class="stat-item">
+                            <div class="stat-item highlight">
                                 <span class="stat-value" id="weightDiff">0</span>
-                                <span class="stat-label">Weight Difference</span>
+                                <span class="stat-label">L/R Diff</span>
                             </div>
-                            <!-- New: Front/Back weights -->
+                            <div class="stat-separator"></div>
                             <div class="stat-item">
                                 <span class="stat-value" id="frontWeight">0</span>
-                                <span class="stat-label">Front 5 Rows (kg)</span>
+                                <span class="stat-label">Front 5</span>
                             </div>
                             <div class="stat-item">
                                 <span class="stat-value" id="backWeight">0</span>
-                                <span class="stat-label">Back 5 Rows (kg)</span>
+                                <span class="stat-label">Back 5</span>
                             </div>
-                            <div class="stat-item">
+                            <div class="stat-item highlight">
                                 <span class="stat-value" id="frontBackDiff">0</span>
-                                <span class="stat-label">Front/Back Difference</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-value" id="filledSeats">0/20</span>
-                                <span class="stat-label">Filled Seats</span>
+                                <span class="stat-label">F/B Diff</span>
+                            </div>                            <div class="stat-separator"></div>                            <div class="stat-item">
+                                <div class="gender-stats">
+                                    <span class="gender-count male-color" id="maleCount">0</span>
+                                    <span class="gender-separator">/</span>
+                                    <span class="gender-count female-color" id="femaleCount">0</span>
+                                </div>
+                                <span class="stat-label">M/F</span>
                             </div>
                         </div>
                     </div>
-                    <div class="boat" id="boatLayout">
-                        <!-- Rows will be generated by JavaScript -->
+                    
+                    <div class="boat-layout-wrapper">
+                        <div class="boat" id="boatLayout">
+                            <!-- Rows will be generated by JavaScript -->
+                        </div>
                     </div>
                 </div>
             </div>

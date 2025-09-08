@@ -138,13 +138,19 @@ function updateBoatLayout() {
             } else {
                 seatElement.classList.remove('fixed');
             }
-            
-            const paddler = boat[i][j];
+              const paddler = boat[i][j];
             if (paddler) {
                 const paddlerElement = document.createElement('div');
                 paddlerElement.className = 'seat-paddler';
                 paddlerElement.dataset.id = paddler.id;
                 paddlerElement.draggable = true;
+                
+                // Add gender class for styling
+                if (paddler.gender === 'M') {
+                    paddlerElement.classList.add('male');
+                } else if (paddler.gender === 'F') {
+                    paddlerElement.classList.add('female');
+                }
                 
                 paddlerElement.innerHTML = `
                     <div class="paddler-name">${paddler.name}</div>
@@ -250,11 +256,10 @@ function showPaddlerDropdown(rowIndex, seatIndex, seatElement) {
         if (isSelected) {
             paddlerOption.classList.add('selected');
         }
-        
-        paddlerOption.innerHTML = `
+          paddlerOption.innerHTML = `
             <div class="boat-paddler-name">${paddler.name}</div>
             <div class="boat-paddler-details">
-                <span>${paddler.weight} kg</span>
+                <span>${paddler.weight} kg | ${paddler.gender || 'M'}</span>
                 <span class="side-${paddler.side}">${paddler.side}</span>
             </div>
         `;

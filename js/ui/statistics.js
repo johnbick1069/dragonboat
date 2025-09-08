@@ -3,35 +3,39 @@ function updateBoatStatistics() {
     const leftWeightElement = document.getElementById('leftWeight');
     const rightWeightElement = document.getElementById('rightWeight');
     const weightDiffElement = document.getElementById('weightDiff');
-    const filledSeatsElement = document.getElementById('filledSeats');
     
     let leftWeight = 0;
     let rightWeight = 0;
-    let filledSeats = 0;
-
-    // New: front/back weights
     let frontWeight = 0;
     let backWeight = 0;
+    let maleCount = 0;
+    let femaleCount = 0;
     
-    // Calculate total weights for each side and count filled seats
+    // Calculate total weights for each side and gender counts
     for (let i = 0; i < 10; i++) {
         for (let j = 0; j < 2; j++) {
             if (boat[i][j]) {
-                filledSeats++;
                 if (j === 0) { // Left side
                     leftWeight += boat[i][j].weight;
                 } else { // Right side
                     rightWeight += boat[i][j].weight;
                 }
-                // Front/back calculation
+                
+                // Front/back calculation (front 5 rows vs back 5 rows)
                 if (i < 5) {
                     frontWeight += boat[i][j].weight;
                 } else {
                     backWeight += boat[i][j].weight;
                 }
+                
+                // Gender counting
+                if (boat[i][j].gender === 'M') {
+                    maleCount++;
+                } else if (boat[i][j].gender === 'F') {
+                    femaleCount++;
+                }
             }
-        }
-    }
+        }    }
     
     // Update DOM elements with the calculated values
     leftWeightElement.textContent = leftWeight.toFixed(1) + ' kg';
@@ -48,10 +52,8 @@ function updateBoatStatistics() {
         weightDiffElement.classList.add('unbalanced');
         weightDiffElement.classList.remove('balanced');
     }
-      // Update filled seats counter
-    filledSeatsElement.textContent = `${filledSeats}/20`;
     
-    // --- New: Front/Back weights and difference ---
+    // Update front/back weights and difference
     const frontWeightElement = document.getElementById('frontWeight');
     const backWeightElement = document.getElementById('backWeight');
     const frontBackDiffElement = document.getElementById('frontBackDiff');
@@ -61,6 +63,7 @@ function updateBoatStatistics() {
         backWeightElement.textContent = backWeight.toFixed(1) + ' kg';
         const frontBackDiff = Math.abs(frontWeight - backWeight);
         frontBackDiffElement.textContent = frontBackDiff.toFixed(1) + ' kg';
+        
         if (frontBackDiff < 5) {
             frontBackDiffElement.classList.add('balanced');
             frontBackDiffElement.classList.remove('unbalanced');
@@ -68,5 +71,14 @@ function updateBoatStatistics() {
             frontBackDiffElement.classList.add('unbalanced');
             frontBackDiffElement.classList.remove('balanced');
         }
+    }
+    
+    // Update M/F gender counts with proper color styling
+    const maleCountElement = document.getElementById('maleCount');
+    const femaleCountElement = document.getElementById('femaleCount');
+    
+    if (maleCountElement && femaleCountElement) {
+        maleCountElement.textContent = maleCount;
+        femaleCountElement.textContent = femaleCount;
     }
 }
