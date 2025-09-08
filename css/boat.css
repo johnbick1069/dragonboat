@@ -33,6 +33,15 @@
     font-weight: 600;
 }
 
+/* Statistics visual indicators */
+.stat-value.balanced {
+    color: var(--success-color);
+}
+
+.stat-value.unbalanced {
+    color: var(--danger-color);
+}
+
 .stat-label {
     font-size: 14px;
     color: var(--secondary-color);
@@ -365,16 +374,17 @@
     }
 }
 
-/* Add these styles at the end of boat.css */
-
+/* Boat controls section styles */
 .boat-controls {
     display: flex;
     justify-content: flex-end;
     margin-bottom: 15px;
+    gap: 10px;
 }
 
 .boat-controls button {
-    margin-left: 10px;
+    padding: 8px 16px;
+    font-size: 14px;
 }
 
 @media (max-width: 768px) {

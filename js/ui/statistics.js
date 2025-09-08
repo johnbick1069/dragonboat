@@ -48,14 +48,13 @@ function updateBoatStatistics() {
         weightDiffElement.classList.add('unbalanced');
         weightDiffElement.classList.remove('balanced');
     }
-    
-    // Update filled seats counter
+      // Update filled seats counter
     filledSeatsElement.textContent = `${filledSeats}/20`;
-
+    
     // --- New: Front/Back weights and difference ---
-    let frontWeightElement = document.getElementById('frontWeight');
-    let backWeightElement = document.getElementById('backWeight');
-    let frontBackDiffElement = document.getElementById('frontBackDiff');
+    const frontWeightElement = document.getElementById('frontWeight');
+    const backWeightElement = document.getElementById('backWeight');
+    const frontBackDiffElement = document.getElementById('frontBackDiff');
 
     if (frontWeightElement && backWeightElement && frontBackDiffElement) {
         frontWeightElement.textContent = frontWeight.toFixed(1) + ' kg';
