@@ -177,10 +177,9 @@ function showEditPaddlerModal(id) {
                 <div class="form-group">
                     <label for="editPaddlerName">Name</label>
                     <input type="text" id="editPaddlerName">
-                </div>
-                <div class="form-group">
+                </div>                <div class="form-group">
                     <label for="editPaddlerWeight">Weight (kg)</label>
-                    <input type="number" id="editPaddlerWeight" min="30" max="200">
+                    <input type="number" id="editPaddlerWeight" min="30" max="500">
                 </div>
                 <div class="form-group">
                     <label for="editPaddlerSide">Paddle Side</label>

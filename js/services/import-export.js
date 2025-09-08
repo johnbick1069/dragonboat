@@ -97,9 +97,8 @@ function importTeam(e) {
                         errorCount++;
                         return;
                     }
-                    
-                    const weight = parseFloat(weightStr);
-                    if (isNaN(weight) || weight <= 0 || weight > 200) {
+                      const weight = parseFloat(weightStr);
+                    if (isNaN(weight) || weight <= 0 || weight > 500) {
                         console.warn(`Row ${index + 2}: Invalid weight "${weightStr}" for ${name}`);
                         errorCount++;
                         return;
