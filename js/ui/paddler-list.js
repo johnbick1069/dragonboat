@@ -7,8 +7,22 @@ function renderPaddlerList() {
         paddlerListElement.innerHTML = '<div class="empty-message">No paddlers added yet</div>';
         return;
     }
-      // Show all paddlers, but mark those in the boat as "in-boat"
-    paddlers.forEach(paddler => {
+    
+    // Sort paddlers: available (not in boat) first, then those in boat
+    const sortedPaddlers = [...paddlers].sort((a, b) => {
+        const aInBoat = isPaddlerInBoat(a);
+        const bInBoat = isPaddlerInBoat(b);
+        
+        // Available paddlers (not in boat) should come first
+        if (!aInBoat && bInBoat) return -1;
+        if (aInBoat && !bInBoat) return 1;
+        
+        // If both have same boat status, maintain original order (by name)
+        return a.name.localeCompare(b.name);
+    });
+    
+    // Show all paddlers, but mark those in the boat as "in-boat"
+    sortedPaddlers.forEach(paddler => {
         const isInBoat = isPaddlerInBoat(paddler);
         const paddlerElement = document.createElement('div');paddlerElement.className = 'paddler-item';
         if (isInBoat) {
