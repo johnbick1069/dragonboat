@@ -7,11 +7,10 @@ function renderPaddlerList() {
         paddlerListElement.innerHTML = '<div class="empty-message">No paddlers added yet</div>';
         return;
     }
-    
-    // Show all paddlers, but mark those in the boat as "in-boat"
+      // Show all paddlers, but mark those in the boat as "in-boat"
     paddlers.forEach(paddler => {
         const isInBoat = isPaddlerInBoat(paddler);
-        const paddlerElement = document.createElement('div');        paddlerElement.className = 'paddler-item';
+        const paddlerElement = document.createElement('div');paddlerElement.className = 'paddler-item';
         if (isInBoat) {
             paddlerElement.classList.add('in-boat');
         }
@@ -58,8 +57,7 @@ function renderPaddlerList() {
         // Delete paddler button
         paddlerElement.querySelector('.delete-paddler').addEventListener('click', (e) => {
             e.stopPropagation();
-            const id = parseInt(e.target.dataset.id);
-            const index = paddlers.findIndex(p => p.id === id);
+            const id = parseInt(e.target.dataset.id);            const index = paddlers.findIndex(p => p.id == id); // Use loose equality
             if (index !== -1) {
                 // Remove from boat first if the paddler is in the boat
                 removePaddlerFromBoat(id);

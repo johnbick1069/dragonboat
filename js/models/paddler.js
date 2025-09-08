@@ -43,9 +43,8 @@ function addPaddler() {
 
 // Function to check if a paddler is in the boat
 function isPaddlerInBoat(paddler) {
-    for (let i = 0; i < 10; i++) {
-        for (let j = 0; j < 2; j++) {
-            if (boat[i][j] && boat[i][j].id === paddler.id) {
+    for (let i = 0; i < 10; i++) {        for (let j = 0; j < 2; j++) {
+            if (boat[i][j] && boat[i][j].id == paddler.id) { // Use loose equality
                 return true;
             }
         }
@@ -57,7 +56,7 @@ function isPaddlerInBoat(paddler) {
 function removePaddlerFromBoat(id) {
     for (let i = 0; i < 10; i++) {
         for (let j = 0; j < 2; j++) {
-            if (boat[i][j] && boat[i][j].id === id) {
+            if (boat[i][j] && boat[i][j].id == id) { // Use loose equality
                 const seatPosition = `${i}-${j}`;
                 // Remove from fixed seats if it was fixed
                 if (fixedSeats.has(seatPosition)) {
@@ -71,7 +70,7 @@ function removePaddlerFromBoat(id) {
 
 // Toggle paddler in/out of boat
 function togglePaddlerInBoat(id) {
-    const paddler = paddlers.find(p => p.id === id);
+    const paddler = paddlers.find(p => p.id == id); // Use loose equality
     if (!paddler) return;
     
     // Check if paddler is already in boat
@@ -107,7 +106,7 @@ function togglePaddlerInBoat(id) {
 
 // Toggle paddler side preference
 function togglePaddlerSide(id) {
-    const paddler = paddlers.find(p => p.id === id);
+    const paddler = paddlers.find(p => p.id == id); // Use loose equality
     if (!paddler) return;
     
     // Cycle through side preferences: left -> right -> both -> left
@@ -163,7 +162,7 @@ function clearPaddlers() {
 
 // Function to show edit paddler modal
 function showEditPaddlerModal(id) {
-    const paddler = paddlers.find(p => p.id === id);
+    const paddler = paddlers.find(p => p.id == id); // Use loose equality to handle type conversion
     if (!paddler) return;
     
     // Create modal if it doesn't exist
@@ -257,12 +256,11 @@ function showEditPaddlerModal(id) {
         // If side changed, check if in boat
         if (paddler.side !== side) {
             paddler.side = side;
-            
-            // If in boat and new side conflicts with position, remove
+              // If in boat and new side conflicts with position, remove
             if (isPaddlerInBoat(paddler)) {
                 for (let i = 0; i < 10; i++) {
                     for (let j = 0; j < 2; j++) {
-                        if (boat[i][j] && boat[i][j].id === id) {
+                        if (boat[i][j] && boat[i][j].id == id) { // Use loose equality
                             const seatSide = j === 0 ? 'left' : 'right';
                             if (side !== 'both' && side !== seatSide) {
                                 removePaddlerFromBoat(id);

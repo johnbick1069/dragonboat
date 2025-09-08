@@ -64,9 +64,7 @@ function handleDrop(e) {
             fromBoat = false;
         } else {
             return; // No valid data
-        }
-        
-        const paddler = paddlers.find(p => p.id === id);
+        }        const paddler = paddlers.find(p => p.id == id); // Use loose equality to handle type conversion
         if (!paddler) return;
         
         const row = parseInt(this.dataset.row);
@@ -96,9 +94,8 @@ function handleDrop(e) {
         let originalSeat = -1;
         
         if (fromBoat) {
-            for (let i = 0; i < 10; i++) {
-                for (let j = 0; j < 2; j++) {
-                    if (boat[i][j] && boat[i][j].id === id) {
+            for (let i = 0; i < 10; i++) {                for (let j = 0; j < 2; j++) {
+                    if (boat[i][j] && boat[i][j].id == id) { // Use loose equality
                         originalRow = i;
                         originalSeat = j;
                         break;

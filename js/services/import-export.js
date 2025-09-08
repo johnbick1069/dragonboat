@@ -138,11 +138,11 @@ function importTeam(e) {
                         existingPaddler.weight = weight;
                         existingPaddler.side = normalizedSide;
                         existingPaddler.gender = normalizedGender;
-                        updatedCount++;
-                    } else {
-                        // Add new paddler
+                        updatedCount++;                    } else {
+                        // Add new paddler with unique integer ID
+                        const newId = Date.now() + importedCount;
                         const paddler = {
-                            id: Date.now() + Math.random(), // Ensure unique ID
+                            id: newId,
                             name,
                             weight,
                             side: normalizedSide,

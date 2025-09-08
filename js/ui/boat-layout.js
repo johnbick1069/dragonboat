@@ -245,9 +245,8 @@ function showPaddlerDropdown(rowIndex, seatIndex, seatElement) {
         
         // Check if this paddler is already in the boat
         const isInBoat = isPaddlerInBoat(paddler);
-        
-        // Check if this is the currently selected paddler
-        const isSelected = boat[rowIndex][seatIndex] && boat[rowIndex][seatIndex].id === paddler.id;
+          // Check if this is the currently selected paddler
+        const isSelected = boat[rowIndex][seatIndex] && boat[rowIndex][seatIndex].id == paddler.id; // Use loose equality
         
         if (isInBoat) {
             paddlerOption.classList.add('in-boat');
