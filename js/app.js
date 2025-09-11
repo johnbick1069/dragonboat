@@ -9,6 +9,11 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeBoatLayout();
     setupEventListeners();
     loadFromLocalStorage();
+    
+    // Load saved lineups if the function exists
+    if (typeof loadSavedLineupsFromStorage === 'function') {
+        loadSavedLineupsFromStorage();
+    }
 });
 
 // Set up main event listeners
@@ -21,6 +26,8 @@ function setupEventListeners() {
     document.getElementById('autoGenerateLineup').addEventListener('click', autoGenerateLineup);
     document.getElementById('balanceBoat').addEventListener('click', balanceBoat);
     document.getElementById('clearAll').addEventListener('click', clearAll);
+    document.getElementById('testAllLineups').addEventListener('click', showLineupTestConfig);
+    document.getElementById('viewSavedLineups').addEventListener('click', showSavedLineups);
     
     // Import/Export
     document.getElementById('importCsv').addEventListener('click', () => {

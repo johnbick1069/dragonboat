@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="css/boat.css">
     <link rel="stylesheet" href="css/paddlers.css">
     <link rel="stylesheet" href="css/simplified-lineup.css">
+    <link rel="stylesheet" href="css/lineup-tester.css">
 </head>
 <body>
     <div class="container">
@@ -60,6 +61,12 @@
                     <h3>Tools</h3>
                     <button id="autoGenerateLineup" class="primary">Lineup All</button>
                     <button id="balanceBoat" class="warning">Balance Boat</button>
+                    <button id="testAllLineups" class="secondary">Test All Lineups</button>
+                    <button id="viewSavedLineups" class="secondary">View Saved Lineups</button>
+                    <div class="tool-info">
+                        <small>Test All Lineups: Find optimal left/right combinations with configurable constraints<br>
+                        View Saved Lineups: Browse and manage previously generated lineups</small>
+                    </div>
                 </div>
 
                 <div class="danger-section">
@@ -149,6 +156,7 @@
     <script src="js/services/storage.js"></script>
     <script src="js/services/import-export.js"></script>
     <script src="js/services/boat-balancer.js"></script>
+    <script src="js/services/lineup-tester.js"></script>
     <script src="js/ui/paddler-list.js"></script>
     <script src="js/ui/boat-layout.js"></script>
     <script src="js/ui/simplified-lineup.js"></script>
