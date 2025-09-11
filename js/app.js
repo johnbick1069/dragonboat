@@ -14,6 +14,11 @@ document.addEventListener('DOMContentLoaded', function() {
     if (typeof loadSavedLineupsFromStorage === 'function') {
         loadSavedLineupsFromStorage();
     }
+    
+    // Load saved race plans if the function exists
+    if (typeof loadRacePlansFromStorage === 'function') {
+        loadRacePlansFromStorage();
+    }
 });
 
 // Set up main event listeners
@@ -28,6 +33,10 @@ function setupEventListeners() {
     document.getElementById('clearAll').addEventListener('click', clearAll);
     document.getElementById('testAllLineups').addEventListener('click', showLineupTestConfig);
     document.getElementById('viewSavedLineups').addEventListener('click', showSavedLineups);
+    
+    // Race planning
+    document.getElementById('planRaces').addEventListener('click', showRacePlanConfig);
+    document.getElementById('viewRacePlans').addEventListener('click', showSavedRacePlans);
     
     // Import/Export
     document.getElementById('importCsv').addEventListener('click', () => {
@@ -70,6 +79,8 @@ function clearAll() {
 function clearSavedData() {
     if (confirm('Are you sure you want to delete all saved data? This cannot be undone.')) {
         localStorage.removeItem('dragonBoatData');
+        localStorage.removeItem('dragonboat_saved_lineups');
+        localStorage.removeItem('dragonboat_race_plans');
         window.location.reload();
     }
 }

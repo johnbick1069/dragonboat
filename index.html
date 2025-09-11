@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="css/paddlers.css">
     <link rel="stylesheet" href="css/simplified-lineup.css">
     <link rel="stylesheet" href="css/lineup-tester.css">
+    <link rel="stylesheet" href="css/race-planning.css">
 </head>
 <body>
     <div class="container">
@@ -66,6 +67,16 @@
                     <div class="tool-info">
                         <small>Test All Lineups: Find optimal left/right combinations with configurable constraints<br>
                         View Saved Lineups: Browse and manage previously generated lineups</small>
+                    </div>
+                </div>
+
+                <div class="race-planning-section">
+                    <h3>Race Planning</h3>
+                    <button id="planRaces" class="primary">Plan Championship</button>
+                    <button id="viewRacePlans" class="secondary">View Race Plans</button>
+                    <div class="tool-info">
+                        <small>Plan Championship: Generate optimal race lineups for multiple races<br>
+                        View Race Plans: Browse and manage saved race plans</small>
                     </div>
                 </div>
 
@@ -157,6 +168,7 @@
     <script src="js/services/import-export.js"></script>
     <script src="js/services/boat-balancer.js"></script>
     <script src="js/services/lineup-tester.js"></script>
+    <script src="js/services/race-planner.js"></script>
     <script src="js/ui/paddler-list.js"></script>
     <script src="js/ui/boat-layout.js"></script>
     <script src="js/ui/simplified-lineup.js"></script>
