@@ -39,10 +39,13 @@ function renderPaddlerList() {
         
         const sideClass = `side-${paddler.side}`;
         
+        // Format TT results display
+        const ttDisplay = paddler.ttResults ? ` | TT: ${paddler.ttResults}` : '';
+        
         paddlerElement.innerHTML = `
             <div>
                 <div class="paddler-name">${paddler.name}</div>
-                <div class="paddler-details">${paddler.weight} kg | ${paddler.gender || 'M'}</div>
+                <div class="paddler-details">${paddler.weight} kg | ${paddler.gender || 'M'}${ttDisplay}</div>
             </div>
             <div>
                 <span class="paddler-side ${sideClass}" data-id="${paddler.id}">${paddler.side}</span>

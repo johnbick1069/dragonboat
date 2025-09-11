@@ -5,6 +5,7 @@ function exportTeam() {    // Prepare data for Papa Parse
     const csvData = paddlers.map(paddler => ({
         Name: paddler.name,
         Weight: paddler.weight,
+        'TT Results': paddler.ttResults || '',
         Side: paddler.side,
         Gender: paddler.gender || 'M'
     }));
@@ -88,6 +89,7 @@ function importTeam(e) {
                     // Support multiple possible column names (flexible header matching)
                     const name = (row.name || row.paddler || row['paddler name'] || '').trim();
                     const weightStr = (row.weight || row.kg || row['weight (kg)'] || '').toString().trim();
+                    const ttStr = (row['tt results'] || row.tt || row.score || row['time trial'] || '').toString().trim();
                     const side = (row.side || row.position || row.preference || '').toString().toLowerCase().trim();
                     const gender = (row.gender || row.sex || row.m_f || row['m/f'] || 'M').toString().toUpperCase().trim();
                     
@@ -102,6 +104,17 @@ function importTeam(e) {
                         console.warn(`Row ${index + 2}: Invalid weight "${weightStr}" for ${name}`);
                         errorCount++;
                         return;
+                    }
+                    
+                    // Parse and validate TT results (optional)
+                    let ttResults = null;
+                    if (ttStr) {
+                        const parsedTT = parseFloat(ttStr);
+                        if (!isNaN(parsedTT) && parsedTT >= 0 && parsedTT <= 500) {
+                            ttResults = parsedTT;
+                        } else {
+                            console.warn(`Row ${index + 2}: Invalid TT results "${ttStr}" for ${name}, skipping TT data`);
+                        }
                     }
                     
                     // Normalize and validate side preference
@@ -137,6 +150,14 @@ function importTeam(e) {
                         existingPaddler.weight = weight;
                         existingPaddler.side = normalizedSide;
                         existingPaddler.gender = normalizedGender;
+                        
+                        // Update or remove TT results
+                        if (ttResults !== null) {
+                            existingPaddler.ttResults = ttResults;
+                        } else {
+                            delete existingPaddler.ttResults;
+                        }
+                        
                         updatedCount++;                    } else {
                         // Add new paddler with unique integer ID
                         const newId = Date.now() + importedCount;
@@ -147,6 +168,12 @@ function importTeam(e) {
                             side: normalizedSide,
                             gender: normalizedGender
                         };
+                        
+                        // Add TT results if available
+                        if (ttResults !== null) {
+                            paddler.ttResults = ttResults;
+                        }
+                        
                         paddlers.push(paddler);
                         existingPaddlers[name.toLowerCase()] = paddler;
                         importedCount++;

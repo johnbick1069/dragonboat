@@ -4,11 +4,13 @@
 function addPaddler() {
     const paddlerNameInput = document.getElementById('paddlerName');
     const paddlerWeightInput = document.getElementById('paddlerWeight');
+    const paddlerTTInput = document.getElementById('paddlerTT');
     const paddlerSideSelect = document.getElementById('paddlerSide');
     const paddlerGenderSelect = document.getElementById('paddlerGender');
     
     const name = paddlerNameInput.value.trim();
     const weight = parseFloat(paddlerWeightInput.value);
+    const ttResults = parseFloat(paddlerTTInput.value);
     const side = paddlerSideSelect.value;
     const gender = paddlerGenderSelect.value;
     
@@ -22,6 +24,12 @@ function addPaddler() {
         return;
     }
     
+    // TT results are optional but if provided should be valid
+    if (paddlerTTInput.value && (isNaN(ttResults) || ttResults < 0 || ttResults > 500)) {
+        alert('Please enter valid TT results (0-500) or leave empty.');
+        return;
+    }
+    
     const paddler = {
         id: Date.now(),
         name,
@@ -30,6 +38,11 @@ function addPaddler() {
         gender
     };
     
+    // Add TT results if provided
+    if (!isNaN(ttResults) && ttResults >= 0) {
+        paddler.ttResults = ttResults;
+    }
+    
     paddlers.push(paddler);
     
     updateAndSave();
@@ -37,6 +50,7 @@ function addPaddler() {
     // Clear form
     paddlerNameInput.value = '';
     paddlerWeightInput.value = '';
+    paddlerTTInput.value = '';
     paddlerSideSelect.value = 'left';
     paddlerGenderSelect.value = 'M';
 }
@@ -182,6 +196,10 @@ function showEditPaddlerModal(id) {
                     <input type="number" id="editPaddlerWeight" min="30" max="500">
                 </div>
                 <div class="form-group">
+                    <label for="editPaddlerTT">TT Results (score)</label>
+                    <input type="number" id="editPaddlerTT" min="0" max="500" step="0.1" placeholder="Optional (0-500)">
+                </div>
+                <div class="form-group">
                     <label for="editPaddlerSide">Paddle Side</label>
                     <select id="editPaddlerSide">
                         <option value="left">Left</option>
@@ -219,11 +237,13 @@ function showEditPaddlerModal(id) {
     const modal = document.getElementById('editPaddlerModal');
     const nameInput = document.getElementById('editPaddlerName');
     const weightInput = document.getElementById('editPaddlerWeight');
+    const ttInput = document.getElementById('editPaddlerTT');
     const sideSelect = document.getElementById('editPaddlerSide');
     const genderSelect = document.getElementById('editPaddlerGender');
     
     nameInput.value = paddler.name;
     weightInput.value = paddler.weight;
+    ttInput.value = paddler.ttResults || '';
     sideSelect.value = paddler.side;
     genderSelect.value = paddler.gender || 'M';
     
@@ -235,6 +255,7 @@ function showEditPaddlerModal(id) {
     newSaveBtn.addEventListener('click', function() {
         const name = nameInput.value.trim();
         const weight = parseFloat(weightInput.value);
+        const ttResults = parseFloat(ttInput.value);
         const side = sideSelect.value;
         const gender = genderSelect.value;
         
@@ -247,10 +268,23 @@ function showEditPaddlerModal(id) {
             alert('Please enter a valid weight.');
             return;
         }
+        
+        // TT results are optional but if provided should be valid
+        if (ttInput.value && (isNaN(ttResults) || ttResults < 0 || ttResults > 500)) {
+            alert('Please enter valid TT results (0-500) or leave empty.');
+            return;
+        }
           // Update paddler data
         paddler.name = name;
         paddler.weight = weight;
         paddler.gender = gender;
+        
+        // Update or remove TT results
+        if (!isNaN(ttResults) && ttResults >= 0) {
+            paddler.ttResults = ttResults;
+        } else {
+            delete paddler.ttResults;
+        }
         
         // If side changed, check if in boat
         if (paddler.side !== side) {
