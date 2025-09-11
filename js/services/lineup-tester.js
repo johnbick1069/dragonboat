@@ -74,7 +74,7 @@ function showLineupTestConfig() {
 
 // Generate all possible lineups
 function runLineupTest() {
-    // Basic validation
+    // Basic validation - need at least 20 paddlers to choose from
     if (paddlers.length < 20) {
         alert('You need at least 20 paddlers to test all lineups.');
         return;
@@ -136,8 +136,23 @@ function generateAllLineups() {
     
     const totalSeats = availableLeftSeats.length + availableRightSeats.length;
     
+    // Validate we have exactly 20 seats total (10 left + 10 right)
+    if (availableLeftSeats.length + availableRightSeats.length !== 20 - fixedPositions.length) {
+        throw new Error(`Invalid seat configuration. Expected 20 total seats, but have ${availableLeftSeats.length} left + ${availableRightSeats.length} right + ${fixedPositions.length} fixed.`);
+    }
+    
     if (availablePaddlers.length < totalSeats) {
         throw new Error(`Not enough paddlers. Need ${totalSeats} but only have ${availablePaddlers.length} available.`);
+    }
+    
+    // Ensure we can make exactly 10 left and 10 right (accounting for fixed positions)
+    const fixedLeftCount = fixedPositions.filter(pos => pos.seat === 0).length;
+    const fixedRightCount = fixedPositions.filter(pos => pos.seat === 1).length;
+    const neededLeftCount = 10 - fixedLeftCount;
+    const neededRightCount = 10 - fixedRightCount;
+    
+    if (neededLeftCount < 0 || neededRightCount < 0) {
+        throw new Error(`Too many fixed positions. Need exactly 10 left and 10 right paddlers total.`);
     }
     
     // Check computational complexity
@@ -146,7 +161,7 @@ function generateAllLineups() {
         throw new Error(`Too many combinations to process (${combinations}). Try fixing more paddler positions or reducing the number of paddlers.`);
     }
     
-    // Generate all possible combinations
+    // Generate all possible combinations of paddlers to fill available seats
     const lineups = [];
     const combinations_list = generateCombinations(availablePaddlers, totalSeats);
     
@@ -154,14 +169,19 @@ function generateAllLineups() {
     const total = combinations_list.length;
     
     for (const combination of combinations_list) {
+        // Check for duplicates in combination (should not happen but safety check)
+        if (hasDuplicates(combination)) {
+            continue;
+        }
+        
         // Try all possible left/right assignments for this combination
-        const assignments = generateLeftRightAssignments(combination, availableLeftSeats.length, availableRightSeats.length);
+        const assignments = generateLeftRightAssignments(combination, neededLeftCount, neededRightCount);
         
         for (const assignment of assignments) {
             if (isValidLineup(assignment, fixedPositions)) {
                 try {
                     const lineup = createLineupObject(assignment, fixedPositions);
-                    if (lineup) {
+                    if (lineup && isValidCompleteLineup(lineup)) {
                         lineups.push(lineup);
                     }
                 } catch (error) {
@@ -285,11 +305,35 @@ function generateCombinations(arr, k) {
 function generateLeftRightAssignments(paddlers, leftCount, rightCount) {
     const assignments = [];
     
+    // Validate that we're asking for the right number of paddlers
+    if (leftCount + rightCount !== paddlers.length) {
+        return assignments; // Return empty if counts don't match
+    }
+    
+    // Validate that this specific combination of paddlers can satisfy the requirements
+    const leftOnlyCount = paddlers.filter(p => p.side === 'left').length;
+    const rightOnlyCount = paddlers.filter(p => p.side === 'right').length;
+    const bothSidesCount = paddlers.filter(p => p.side === 'both').length;
+    
+    // Check if this combination can fill both sides
+    const maxLeft = leftOnlyCount + bothSidesCount;
+    const maxRight = rightOnlyCount + bothSidesCount;
+    
+    // Skip this combination if it's impossible to assign correctly
+    if (maxLeft < leftCount || maxRight < rightCount) {
+        return assignments;
+    }
+    
     // Generate all ways to choose 'leftCount' paddlers for left side
     const leftCombinations = generateCombinations(paddlers, leftCount);
     
     for (const leftPaddlers of leftCombinations) {
         const rightPaddlers = paddlers.filter(p => !leftPaddlers.includes(p));
+        
+        // Double-check we have the right count
+        if (rightPaddlers.length !== rightCount) {
+            continue;
+        }
         
         // Check if assignment is valid based on side preferences
         if (isValidSideAssignment(leftPaddlers, rightPaddlers)) {
@@ -301,6 +345,68 @@ function generateLeftRightAssignments(paddlers, leftCount, rightCount) {
     }
     
     return assignments;
+}
+
+// Check for duplicate paddlers in a combination
+function hasDuplicates(paddlers) {
+    const ids = paddlers.map(p => p.id);
+    return ids.length !== new Set(ids).size;
+}
+
+// Validate that a complete lineup has exactly 10 left and 10 right paddlers with no duplicates
+function isValidCompleteLineup(lineup) {
+    const leftPaddlers = [];
+    const rightPaddlers = [];
+    const allPaddlerIds = new Set();
+    
+    // Collect all paddlers from the boat
+    for (let i = 0; i < 10; i++) {
+        if (lineup.boat[i][0]) {
+            leftPaddlers.push(lineup.boat[i][0]);
+            if (allPaddlerIds.has(lineup.boat[i][0].id)) {
+                console.warn('Duplicate paddler found on left side:', lineup.boat[i][0].name);
+                return false;
+            }
+            allPaddlerIds.add(lineup.boat[i][0].id);
+        }
+        
+        if (lineup.boat[i][1]) {
+            rightPaddlers.push(lineup.boat[i][1]);
+            if (allPaddlerIds.has(lineup.boat[i][1].id)) {
+                console.warn('Duplicate paddler found on right side:', lineup.boat[i][1].name);
+                return false;
+            }
+            allPaddlerIds.add(lineup.boat[i][1].id);
+        }
+    }
+    
+    // Check that we have exactly 10 on each side
+    if (leftPaddlers.length !== 10) {
+        console.warn(`Invalid left side count: ${leftPaddlers.length}, expected 10`);
+        return false;
+    }
+    
+    if (rightPaddlers.length !== 10) {
+        console.warn(`Invalid right side count: ${rightPaddlers.length}, expected 10`);
+        return false;
+    }
+    
+    // Validate side preferences
+    for (const paddler of leftPaddlers) {
+        if (paddler.side !== 'left' && paddler.side !== 'both') {
+            console.warn(`Paddler ${paddler.name} assigned to left but prefers ${paddler.side}`);
+            return false;
+        }
+    }
+    
+    for (const paddler of rightPaddlers) {
+        if (paddler.side !== 'right' && paddler.side !== 'both') {
+            console.warn(`Paddler ${paddler.name} assigned to right but prefers ${paddler.side}`);
+            return false;
+        }
+    }
+    
+    return true;
 }
 
 function isValidSideAssignment(leftPaddlers, rightPaddlers) {
@@ -321,6 +427,28 @@ function isValidSideAssignment(leftPaddlers, rightPaddlers) {
 }
 
 function isValidLineup(assignment, fixedPositions) {
+    // Validate counts
+    const fixedLeftCount = fixedPositions.filter(pos => pos.seat === 0).length;
+    const fixedRightCount = fixedPositions.filter(pos => pos.seat === 1).length;
+    const totalLeft = fixedLeftCount + assignment.left.length;
+    const totalRight = fixedRightCount + assignment.right.length;
+    
+    // Must have exactly 10 on each side
+    if (totalLeft !== 10 || totalRight !== 10) {
+        return false;
+    }
+    
+    // Check for duplicates between assignment and fixed positions
+    const fixedIds = new Set(fixedPositions.map(pos => pos.paddler.id));
+    const assignedIds = new Set([...assignment.left, ...assignment.right].map(p => p.id));
+    
+    // Check if there's any overlap between fixed and assigned paddlers
+    for (const id of assignedIds) {
+        if (fixedIds.has(id)) {
+            return false; // Duplicate found
+        }
+    }
+    
     // Calculate total weights
     const fixedLeftWeight = fixedPositions
         .filter(pos => pos.seat === 0)
