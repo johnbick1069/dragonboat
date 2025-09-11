@@ -4,7 +4,8 @@ let lineupTestResults = [];
 let savedLineups = []; // Persistent storage for saved lineups
 let lineupTestConfig = {
     maxWeightDifference: 10, // kg
-    maxMalePaddlers: 10
+    maxMalePaddlers: 10,
+    minMalePaddlers: 10
 };
 
 // Configuration for lineup testing
@@ -24,6 +25,10 @@ function showLineupTestConfig() {
                 <div class="form-group">
                     <label for="maxMales">Maximum Male Paddlers</label>
                     <input type="number" id="maxMales" value="${lineupTestConfig.maxMalePaddlers}" min="0" max="20">
+                </div>
+                <div class="form-group">
+                    <label for="minMales">Minimum Male Paddlers</label>
+                    <input type="number" id="minMales" value="${lineupTestConfig.minMalePaddlers}" min="0" max="20">
                 </div>
             </div>
             <div class="modal-actions">
@@ -47,9 +52,17 @@ function showLineupTestConfig() {
     modal.querySelector('#startLineupTest').addEventListener('click', () => {
         const maxWeightDiff = parseFloat(document.getElementById('maxWeightDiff').value);
         const maxMales = parseInt(document.getElementById('maxMales').value);
+        const minMales = parseInt(document.getElementById('minMales').value);
+        
+        // Validate constraints
+        if (minMales > maxMales) {
+            alert('Minimum male paddlers cannot exceed maximum male paddlers.');
+            return;
+        }
         
         lineupTestConfig.maxWeightDifference = maxWeightDiff;
         lineupTestConfig.maxMalePaddlers = maxMales;
+        lineupTestConfig.minMalePaddlers = minMales;
         
         document.body.removeChild(modal);
         runLineupTest();
@@ -325,12 +338,16 @@ function isValidLineup(assignment, fixedPositions) {
         return false;
     }
     
-    // Check male paddler constraint
+    // Check male paddler constraints
     const fixedMales = fixedPositions.filter(pos => pos.paddler.gender === 'M').length;
     const assignedMales = [...assignment.left, ...assignment.right].filter(p => p.gender === 'M').length;
     const totalMales = fixedMales + assignedMales;
     
     if (totalMales > lineupTestConfig.maxMalePaddlers) {
+        return false;
+    }
+    
+    if (totalMales < lineupTestConfig.minMalePaddlers) {
         return false;
     }
     
