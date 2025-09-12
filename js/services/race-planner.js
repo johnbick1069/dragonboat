@@ -4,11 +4,21 @@ let savedRacePlans = []; // Persistent storage for race plans
 let raceConfig = {
     numRaces: 3,
     minRacesPerPaddler: 2,
-    maxIterations: 10000
+    fixedLineups: []
 };
 
 // Show race planning configuration modal
 function showRacePlanConfig() {
+    console.log('🚀 showRacePlanConfig called');
+    console.log('savedLineups available:', typeof savedLineups !== 'undefined', savedLineups ? savedLineups.length : 'undefined');
+    
+    // Check if savedLineups is available
+    if (typeof savedLineups === 'undefined') {
+        console.error('❌ savedLineups is not defined');
+        alert('Error: Saved lineups not available. Please try refreshing the page and generate some lineups first.');
+        return;
+    }
+    
     const modal = document.createElement('div');
     modal.id = 'racePlanModal';
     modal.className = 'modal';
@@ -72,8 +82,12 @@ function showRacePlanConfig() {
     });
     
     modal.querySelector('#startRacePlanning').addEventListener('click', () => {
+        console.log('🚀 Start Race Planning button clicked');
+        
         const numRaces = parseInt(document.getElementById('numRaces').value);
         const minRacesPerPaddler = parseInt(document.getElementById('minRacesPerPaddler').value);
+        
+        console.log('Config values:', { numRaces, minRacesPerPaddler });
         
         // Validate constraints
         if (minRacesPerPaddler > numRaces) {
@@ -81,7 +95,7 @@ function showRacePlanConfig() {
             return;
         }
         
-        if (savedLineups.length === 0) {
+        if (typeof savedLineups === 'undefined' || savedLineups.length === 0) {
             alert('No saved lineups found. Please generate some lineups first using "Test All Lineups".');
             return;
         }
@@ -90,6 +104,8 @@ function showRacePlanConfig() {
         const fixedCount = raceConfig.fixedLineups.length;
         const remainingRaces = numRaces - fixedCount;
         const availableLineups = savedLineups.length - fixedCount;
+        
+        console.log('Lineup counts:', { fixedCount, remainingRaces, availableLineups, totalSaved: savedLineups.length });
         
         if (fixedCount > numRaces) {
             alert(`You have selected ${fixedCount} fixed lineups, but only ${numRaces} races. Please reduce fixed lineups or increase number of races.`);
@@ -104,6 +120,7 @@ function showRacePlanConfig() {
         raceConfig.numRaces = numRaces;
         raceConfig.minRacesPerPaddler = minRacesPerPaddler;
         
+        console.log('Closing modal and calling generateRacePlans...');
         document.body.removeChild(modal);
         generateRacePlans();
     });
@@ -220,9 +237,52 @@ function removeFixedLineup(lineupIndex) {
 
 // Generate optimized race plans
 function generateRacePlans() {
-    if (savedLineups.length === 0) {
+    console.log('🚀 generateRacePlans called');
+    console.log('savedLineups available:', typeof savedLineups !== 'undefined', savedLineups ? savedLineups.length : 'undefined');
+    
+    if (typeof savedLineups === 'undefined' || savedLineups.length === 0) {
         alert('No saved lineups found. Please generate some lineups first using "Test All Lineups".');
         return;
+    }
+    
+    const numRaces = raceConfig.numRaces;
+    const minRacesPerPaddler = raceConfig.minRacesPerPaddler;
+    const fixedLineups = raceConfig.fixedLineups || [];
+    
+    // Early impossibility detection
+    const impossibilityCheck = detectImpossibleConstraints(numRaces, minRacesPerPaddler, fixedLineups);
+    if (impossibilityCheck.isImpossible) {
+        alert('Impossible constraints detected: ' + impossibilityCheck.reason);
+        console.log('❌ Race planning aborted:', impossibilityCheck.reason);
+        return;
+    }
+    
+    // Calculate problem size and warn user if too large
+    const fixedCount = fixedLineups.length;
+    const remainingRaces = numRaces - fixedCount;
+    const availableLineups = savedLineups.length - fixedCount;
+    
+    if (remainingRaces > 0) {
+        // Calculate combinations with repetition: C(n+k-1, k)
+        const n = availableLineups;
+        const k = remainingRaces;
+        const combinations = calculateCombinationsWithRepetition(n, k);
+        
+        console.log(`Problem size: C(${n}+${k}-1, ${k}) = ${combinations} combinations to check`);
+        
+        if (combinations > 1000000) {
+            const proceed = confirm(
+                `This will check ${combinations.toLocaleString()} combinations, which may take a very long time and could freeze the browser. ` +
+                `Strongly recommend fixing more lineups (currently ${fixedCount}) or reducing races (currently ${numRaces}). Continue anyway?`
+            );
+            if (!proceed) return;
+        } else if (combinations > 100000) {
+            const proceed = confirm(
+                `This will check ${combinations.toLocaleString()} combinations, which may take a while. ` +
+                `Consider fixing more lineups (currently ${fixedCount}) or reducing races (currently ${numRaces}). Continue anyway?`
+            );
+            if (!proceed) return;
+        }
     }
     
     const progressModal = showRacePlanProgressModal();
@@ -237,8 +297,15 @@ function generateRacePlans() {
                 return;
             }
             
-            // Save race plans
+            // Save race plans (with intelligent limiting)
             savedRacePlans = racePlans;
+            
+            // Show summary of results
+            console.log(`🎯 Race planning completed: Found ${racePlans.length} valid plans`);
+            if (racePlans.length > 100) {
+                console.log(`📊 Score range: ${racePlans[0].totalScore.toFixed(1)} (best) to ${racePlans[racePlans.length-1].totalScore.toFixed(1)} (worst)`);
+            }
+            
             saveRacePlansToStorage();
             
             showRacePlanResults(racePlans);
@@ -250,73 +317,382 @@ function generateRacePlans() {
     }, 100);
 }
 
+// Calculate combinations with repetition: C(n+k-1, k)
+function calculateCombinationsWithRepetition(n, k) {
+    if (n === 0 || k === 0) return 1;
+    
+    // Calculate C(n+k-1, k) = C(n+k-1, n-1)
+    // Use the smaller of k or n-1 for efficiency
+    const numeratorSize = n + k - 1;
+    const denominatorSize = Math.min(k, n - 1);
+    
+    let result = 1;
+    for (let i = 0; i < denominatorSize; i++) {
+        result = result * (numeratorSize - i) / (i + 1);
+    }
+    
+    return Math.round(result);
+}
+
 // Find optimal race plans using constraint satisfaction
 function findOptimalRacePlans() {
-    const allPaddlers = paddlers;
+    console.log('🔍 findOptimalRacePlans called');
+    
     const numRaces = raceConfig.numRaces;
     const minRaces = raceConfig.minRacesPerPaddler;
-    const maxIterations = raceConfig.maxIterations;
+    const maxSitOuts = numRaces - minRaces; // Key constraint: max sit-outs per paddler
     const fixedLineups = raceConfig.fixedLineups || [];
     
-    console.log(`Generating race plans: ${numRaces} races, min ${minRaces} races per paddler`);
+    console.log(`🚀 Optimized race planning: ${numRaces} races, min ${minRaces} races per paddler (max ${maxSitOuts} sit-outs)`);
     console.log(`Available lineups: ${savedLineups.length}, Fixed lineups: ${fixedLineups.length}`);
     
-    const validPlans = [];
-    let iterations = 0;
+    // Early impossibility detection
+    const impossibilityCheck = detectImpossibleConstraints(numRaces, minRaces, fixedLineups);
+    if (impossibilityCheck.isImpossible) {
+        console.log('❌ Impossible constraints detected:', impossibilityCheck.reason);
+        alert('Impossible constraints detected: ' + impossibilityCheck.reason);
+        return [];
+    }
     
-    // Get fixed lineups and available lineups for remaining slots
-    const fixedLineupObjects = fixedLineups.map(index => savedLineups[index]);
+    // Prepare lineup data
+    const fixedLineupObjects = fixedLineups.map(index => savedLineups[index]).filter(Boolean);
     const availableIndices = savedLineups.map((_, index) => index).filter(index => !fixedLineups.includes(index));
-    const availableLineups = availableIndices.map(index => savedLineups[index]);
+    const remainingRaces = numRaces - fixedLineupObjects.length;
     
-    // Sort available lineups by score for better results (higher scores first)
-    const sortedAvailableIndices = availableIndices.sort((a, b) => (savedLineups[b].ttSum || 0) - (savedLineups[a].ttSum || 0));
-    const sortedAvailableLineups = sortedAvailableIndices.map(index => savedLineups[index]);
-    
-    const remainingRaces = numRaces - fixedLineups.length;
+    let validPlans = [];
     
     if (remainingRaces === 0) {
         // All races are fixed lineups
-        const plan = fixedLineupObjects;
-        const stats = calculateRacePlanStats(plan);
-        
+        const stats = calculateRacePlanStats(fixedLineupObjects);
         if (isValidRacePlan(stats, minRaces)) {
             validPlans.push({
                 id: generateUniqueId(),
-                races: plan,
+                races: [...fixedLineupObjects],
                 stats: stats,
                 totalScore: stats.totalScore,
                 timestamp: new Date().toISOString()
             });
         }
-    } else if (remainingRaces === 1) {
-        // One remaining race to fill
-        sortedAvailableLineups.slice(0, Math.min(10, sortedAvailableLineups.length)).forEach(lineup => {
-            const plan = [...fixedLineupObjects, lineup];
-            const stats = calculateRacePlanStats(plan);
-            
-            if (isValidRacePlan(stats, minRaces)) {
-                validPlans.push({
-                    id: generateUniqueId(),
-                    races: plan,
-                    stats: stats,
-                    totalScore: stats.totalScore,
-                    timestamp: new Date().toISOString()
-                });
-            }
-        });
     } else {
-        // Multi-race optimization with constraint satisfaction
-        validPlans.push(...generateMultiRacePlansWithFixed(fixedLineupObjects, sortedAvailableLineups, remainingRaces, minRaces, maxIterations));
+        // Use optimized algorithm for remaining races
+        const n = availableIndices.length;
+        const k = remainingRaces;
+        const totalCombinations = calculateCombinationsWithRepetition(n, k);
+        
+        console.log(`Total possible combinations: ${totalCombinations.toLocaleString()}`);
+        
+        if (totalCombinations > 5000000) {
+            console.log('⚠️ Problem size too large for exhaustive search. Using intelligent sampling strategy.');
+            validPlans = generateSampledRacePlans(fixedLineupObjects, availableIndices, remainingRaces, minRaces, maxSitOuts);
+        } else {
+            validPlans = generateAllValidRacePlansOptimized(fixedLineupObjects, availableIndices, remainingRaces, minRaces, maxSitOuts);
+        }
     }
     
-    console.log(`Generated ${validPlans.length} valid race plans`);
+    console.log(`✅ Generated ${validPlans.length} valid race plans`);
     
     // Sort by total score (higher is better)
     validPlans.sort((a, b) => b.totalScore - a.totalScore);
     
-    // Limit to top 50 plans to prevent memory issues
-    return validPlans.slice(0, 50);
+    // Limit total results to prevent memory and storage issues
+    const maxResults = 1000;
+    if (validPlans.length > maxResults) {
+        console.log(`📊 Found ${validPlans.length} valid plans. Keeping top ${maxResults} by score.`);
+        validPlans = validPlans.slice(0, maxResults);
+    }
+    
+    // Return the limited results
+    return validPlans;
+}
+
+// Detect impossible constraints early to avoid unnecessary computation
+function detectImpossibleConstraints(numRaces, minRacesPerPaddler, fixedLineups = []) {
+    console.log('🔍 Checking for impossible constraints...');
+    
+    // Get all unique paddlers across all lineups
+    const allPaddlers = new Set();
+    savedLineups.forEach(lineup => {
+        if (lineup.paddlersInBoat) {
+            lineup.paddlersInBoat.forEach(paddler => {
+                if (paddler && paddler.id) {
+                    allPaddlers.add(paddler.id);
+                }
+            });
+        }
+        if (lineup.paddlersNotInBoat) {
+            lineup.paddlersNotInBoat.forEach(paddler => {
+                if (paddler && paddler.id) {
+                    allPaddlers.add(paddler.id);
+                }
+            });
+        }
+    });
+    
+    const totalPaddlers = allPaddlers.size;
+    console.log(`Total paddlers in system: ${totalPaddlers}`);
+    
+    // Check 1: Basic mathematical impossibility
+    const maxPaddlersPerRace = 20; // 10 left + 10 right
+    const totalPaddlerSlots = numRaces * maxPaddlersPerRace;
+    const requiredPaddlerRaces = totalPaddlers * minRacesPerPaddler;
+    
+    if (requiredPaddlerRaces > totalPaddlerSlots) {
+        return {
+            isImpossible: true,
+            reason: `Need ${requiredPaddlerRaces} total paddler-races (${totalPaddlers} paddlers × ${minRacesPerPaddler} min races), but only ${totalPaddlerSlots} slots available (${numRaces} races × ${maxPaddlersPerRace} paddlers per race)`
+        };
+    }
+    
+    // Check 2: Fixed lineup constraint conflicts
+    if (fixedLineups.length > 0) {
+        const fixedRaces = fixedLineups.map(index => savedLineups[index]).filter(Boolean);
+        const paddlerRaceCount = new Map();
+        
+        // Count how many times each paddler appears in fixed races
+        fixedRaces.forEach(race => {
+            if (race.paddlersInBoat) {
+                race.paddlersInBoat.forEach(paddler => {
+                    if (paddler && paddler.id) {
+                        paddlerRaceCount.set(paddler.id, (paddlerRaceCount.get(paddler.id) || 0) + 1);
+                    }
+                });
+            }
+        });
+        
+        // Check if any paddler already has too many races
+        for (const [paddlerId, raceCount] of paddlerRaceCount) {
+            if (raceCount > numRaces) {
+                return {
+                    isImpossible: true,
+                    reason: `Paddler ${paddlerId} appears ${raceCount} times in fixed lineups, but only ${numRaces} total races available`
+                };
+            }
+        }
+        
+        // Check 3: Paddlers who sit out too much in remaining races
+        const remainingRaces = numRaces - fixedRaces.length;
+        if (remainingRaces > 0) {
+            for (const paddlerId of allPaddlers) {
+                const currentRaces = paddlerRaceCount.get(paddlerId) || 0;
+                const needMoreRaces = minRacesPerPaddler - currentRaces;
+                
+                if (needMoreRaces > remainingRaces) {
+                    return {
+                        isImpossible: true,
+                        reason: `Paddler ${paddlerId} needs ${needMoreRaces} more races to meet minimum ${minRacesPerPaddler}, but only ${remainingRaces} races remaining`
+                    };
+                }
+            }
+        }
+    }
+    
+    // Check 4: Lineup availability
+    if (savedLineups.length === 0) {
+        return {
+            isImpossible: true,
+            reason: 'No saved lineups available for race planning'
+        };
+    }
+    
+    console.log('✅ No impossible constraints detected');
+    return { isImpossible: false };
+}
+
+// Generate all possible valid race plans using optimized algorithm
+function generateAllValidRacePlansOptimized(fixedLineups, availableLineupIndices, remainingRaces, minRaces, maxSitOuts) {
+    const validPlans = [];
+    const totalRaces = fixedLineups.length + remainingRaces;
+    
+    console.log(`🚀 Optimized search: ${remainingRaces} remaining races, ${availableLineupIndices.length} available lineups`);
+    
+    // Early validation: Check if fixed lineups already violate constraints
+    if (fixedLineups.length > 0) {
+        const fixedStats = calculateRacePlanStats(fixedLineups);
+        if (fixedStats.maxSitOuts > maxSitOuts) {
+            console.log('❌ Fixed lineups already violate sit-out constraints');
+            return validPlans;
+        }
+    }
+    
+    if (remainingRaces === 0) {
+        return validPlans; // Already handled in parent function
+    }
+    
+    let validCount = 0;
+    let checkedCount = 0;
+    let prunedEarly = 0;
+    const startTime = performance.now();
+    
+    // Use memory-efficient iterator for multiset combinations
+    for (const combination of generateMultisetCombinationsIterator(availableLineupIndices.length, remainingRaces)) {
+        checkedCount++;
+        
+        // Convert indices to lineup objects
+        const remainingLineups = combination.map(index => savedLineups[availableLineupIndices[index]]);
+        const fullPlan = [...fixedLineups, ...remainingLineups];
+        
+        // Early pruning: Quick sit-out check before full calculation
+        if (canSatisfySitOutConstraint(fullPlan, maxSitOuts)) {
+            const stats = calculateRacePlanStats(fullPlan);
+            
+            if (isValidRacePlan(stats, minRaces)) {
+                validPlans.push({
+                    id: generateUniqueId(),
+                    races: fullPlan,
+                    stats: stats,
+                    totalScore: stats.totalScore,
+                    timestamp: new Date().toISOString(),
+                    combination: combination.slice() // For debugging
+                });
+                validCount++;
+            }
+        } else {
+            prunedEarly++;
+        }
+    }
+    
+    const endTime = performance.now();
+    const totalTime = (endTime - startTime) / 1000;
+    console.log(`✅ Search complete: ${checkedCount} combinations checked in ${totalTime.toFixed(2)}s, ${validCount} valid plans found, ${prunedEarly} pruned early`);
+    
+    return validPlans;
+}
+
+// Generate sampled race plans for very large problem spaces
+function generateSampledRacePlans(fixedLineups, availableLineupIndices, remainingRaces, minRaces, maxSitOuts) {
+    const validPlans = [];
+    const startTime = performance.now();
+    const maxSamples = 1000000; // Sample up to 1M combinations
+    let checkedCount = 0;
+    let validCount = 0;
+    let prunedEarly = 0;
+    
+    console.log(`🎯 Sampling strategy: checking up to ${maxSamples.toLocaleString()} combinations`);
+    
+    // Intelligent sampling: focus on high-quality lineups
+    const sortedIndices = availableLineupIndices.sort((a, b) => {
+        const lineupA = savedLineups[a];
+        const lineupB = savedLineups[b];
+        return (lineupB.ttSum || 0) - (lineupA.ttSum || 0);
+    });
+    
+    // Use top lineups more frequently
+    const topCount = Math.min(20, sortedIndices.length);
+    const regularCount = sortedIndices.length - topCount;
+    
+    while (checkedCount < maxSamples && validCount < 5000) {
+        checkedCount++;
+        
+        // Generate a random combination favoring top lineups
+        const combination = [];
+        for (let i = 0; i < remainingRaces; i++) {
+            if (Math.random() < 0.7 && topCount > 0) {
+                // 70% chance to pick from top lineups
+                combination.push(Math.floor(Math.random() * topCount));
+            } else {
+                // 30% chance to pick from any lineup
+                combination.push(Math.floor(Math.random() * sortedIndices.length));
+            }
+        }
+        
+        // Convert indices to lineup objects
+        const remainingLineups = combination.map(index => savedLineups[sortedIndices[index]]);
+        const fullPlan = [...fixedLineups, ...remainingLineups];
+        
+        // Early pruning
+        if (canSatisfySitOutConstraint(fullPlan, maxSitOuts)) {
+            const stats = calculateRacePlanStats(fullPlan);
+            
+            if (isValidRacePlan(stats, minRaces)) {
+                // Check for duplicates (basic duplicate detection)
+                const isDuplicate = validPlans.some(existingPlan => 
+                    Math.abs(existingPlan.totalScore - stats.totalScore) < 0.1
+                );
+                
+                if (!isDuplicate) {
+                    validPlans.push({
+                        id: generateUniqueId(),
+                        races: fullPlan,
+                        stats: stats,
+                        totalScore: stats.totalScore,
+                        timestamp: new Date().toISOString(),
+                        isSampled: true
+                    });
+                    validCount++;
+                }
+            }
+        } else {
+            prunedEarly++;
+        }
+        
+        // Early termination if no results after significant sampling
+        if (checkedCount > 100000 && validCount === 0) {
+            console.log('⚠️ No valid solutions found in sampling. Constraints may be too strict.');
+            break;
+        }
+    }
+    
+    const endTime = performance.now();
+    const totalTime = (endTime - startTime) / 1000;
+    console.log(`✅ Sampling complete: ${checkedCount} combinations sampled in ${totalTime.toFixed(2)}s, ${validCount} valid plans found`);
+    
+    return validPlans;
+}
+
+// Memory-efficient iterator for multiset combinations
+// Generates combinations on-demand instead of storing all in memory
+function* generateMultisetCombinationsIterator(numLineups, numRaces) {
+    if (numRaces === 0) {
+        yield [];
+        return;
+    }
+    
+    function* generateCombination(current, start, depth) {
+        if (depth === numRaces) {
+            yield [...current];
+            return;
+        }
+        
+        for (let i = start; i < numLineups; i++) {
+            current.push(i);
+            yield* generateCombination(current, i, depth + 1);
+            current.pop();
+        }
+    }
+    
+    yield* generateCombination([], 0, 0);
+}
+
+// Early pruning: Quick check if a plan can possibly satisfy sit-out constraints
+function canSatisfySitOutConstraint(racePlan, maxSitOuts) {
+    if (racePlan.length === 0) return true;
+    
+    const participationCounts = new Map();
+    const totalRaces = racePlan.length;
+    
+    // Count participation in each race - optimized loop
+    for (let i = 0; i < racePlan.length; i++) {
+        const race = racePlan[i];
+        const paddlersInRace = race.paddlersInBoat || [];
+        
+        for (let j = 0; j < paddlersInRace.length; j++) {
+            const paddler = paddlersInRace[j];
+            if (paddler && paddler.id) {
+                const currentCount = participationCounts.get(paddler.id) || 0;
+                participationCounts.set(paddler.id, currentCount + 1);
+            }
+        }
+    }
+    
+    // Early exit: check if any paddler sits out more than allowed
+    for (const [paddlerId, participationCount] of participationCounts) {
+        const sitOuts = totalRaces - participationCount;
+        if (sitOuts > maxSitOuts) {
+            return false;
+        }
+    }
+    
+    return true;
 }
 
 // Generate multi-race plans with optimization
@@ -872,9 +1248,66 @@ function hideProgressModal(modal) {
 // Storage functions for race plans
 function saveRacePlansToStorage() {
     try {
-        localStorage.setItem('dragonboat_race_plans', JSON.stringify(savedRacePlans));
+        // Limit the number of plans saved to prevent quota exceeded errors
+        const maxPlansToSave = 100;
+        let plansToSave = savedRacePlans;
+        
+        // If we have too many plans, save only the best ones
+        if (savedRacePlans.length > maxPlansToSave) {
+            console.log(`📦 Too many race plans (${savedRacePlans.length}). Saving top ${maxPlansToSave} by score.`);
+            plansToSave = [...savedRacePlans]
+                .sort((a, b) => b.totalScore - a.totalScore)
+                .slice(0, maxPlansToSave);
+        }
+        
+        // Try to save, and if still too big, reduce further
+        let attempts = 0;
+        let currentLimit = maxPlansToSave;
+        
+        while (attempts < 3) {
+            try {
+                const dataToSave = JSON.stringify(plansToSave);
+                
+                // Check approximate size (rough estimate: 2 bytes per character)
+                const sizeKB = (dataToSave.length * 2) / 1024;
+                console.log(`💾 Attempting to save ${plansToSave.length} race plans (~${sizeKB.toFixed(0)}KB)`);
+                
+                localStorage.setItem('dragonboat_race_plans', dataToSave);
+                console.log(`✅ Successfully saved ${plansToSave.length} race plans to localStorage`);
+                break;
+                
+            } catch (quotaError) {
+                if (quotaError.name === 'QuotaExceededError') {
+                    currentLimit = Math.floor(currentLimit / 2);
+                    console.log(`⚠️ Storage quota exceeded. Reducing to top ${currentLimit} plans.`);
+                    
+                    if (currentLimit < 10) {
+                        console.log('❌ Cannot save race plans - even minimal data exceeds storage quota');
+                        // Clear any existing race plans to free up space
+                        localStorage.removeItem('dragonboat_race_plans');
+                        break;
+                    }
+                    
+                    plansToSave = [...savedRacePlans]
+                        .sort((a, b) => b.totalScore - a.totalScore)
+                        .slice(0, currentLimit);
+                    
+                    attempts++;
+                } else {
+                    throw quotaError;
+                }
+            }
+        }
+        
     } catch (error) {
         console.warn('Could not save race plans to localStorage:', error);
+        // Try to clear old data to make space
+        try {
+            localStorage.removeItem('dragonboat_race_plans');
+            console.log('🗑️ Cleared old race plans data to free up storage space');
+        } catch (clearError) {
+            console.warn('Could not clear old race plans data:', clearError);
+        }
     }
 }
 
