@@ -32,6 +32,17 @@ function showRacePlanConfig() {
                     <small>Race plans will use combinations of your saved lineups</small>
                 </div>
             </div>
+            
+            <div class="lineup-selection-section">
+                <h3>Fixed Lineups (Optional)</h3>
+                <p class="section-description">Select specific lineups that MUST be included in every race plan:</p>
+                <div class="fixed-lineups-controls">
+                    <button id="selectFixedLineups" class="secondary">Select Fixed Lineups</button>
+                    <span id="fixedLineupsCount" class="count-display">0 lineups selected</span>
+                </div>
+                <div id="fixedLineupsList" class="fixed-lineups-list"></div>
+            </div>
+            
             <div class="modal-actions">
                 <button id="startRacePlanning" class="primary">Generate Race Plans</button>
                 <button id="cancelRacePlanning" class="secondary">Cancel</button>
@@ -41,6 +52,12 @@ function showRacePlanConfig() {
     
     document.body.appendChild(modal);
     
+    // Initialize fixed lineups tracking
+    if (!raceConfig.fixedLineups) {
+        raceConfig.fixedLineups = [];
+    }
+    updateFixedLineupsDisplay();
+    
     // Event listeners
     modal.querySelector('.close').addEventListener('click', () => {
         document.body.removeChild(modal);
@@ -48,6 +65,10 @@ function showRacePlanConfig() {
     
     modal.querySelector('#cancelRacePlanning').addEventListener('click', () => {
         document.body.removeChild(modal);
+    });
+    
+    modal.querySelector('#selectFixedLineups').addEventListener('click', () => {
+        showFixedLineupSelector();
     });
     
     modal.querySelector('#startRacePlanning').addEventListener('click', () => {
@@ -65,8 +86,18 @@ function showRacePlanConfig() {
             return;
         }
         
-        if (savedLineups.length < numRaces) {
-            alert(`You need at least ${numRaces} saved lineups to create a ${numRaces}-race plan. You currently have ${savedLineups.length} saved lineups. Please generate more lineups using "Test All Lineups".`);
+        // Check if we have enough non-fixed lineups for the remaining races
+        const fixedCount = raceConfig.fixedLineups.length;
+        const remainingRaces = numRaces - fixedCount;
+        const availableLineups = savedLineups.length - fixedCount;
+        
+        if (fixedCount > numRaces) {
+            alert(`You have selected ${fixedCount} fixed lineups, but only ${numRaces} races. Please reduce fixed lineups or increase number of races.`);
+            return;
+        }
+        
+        if (remainingRaces > 0 && availableLineups < remainingRaces) {
+            alert(`Not enough lineups available. Need ${remainingRaces} more lineups for remaining races, but only have ${availableLineups} available.`);
             return;
         }
         
@@ -79,6 +110,112 @@ function showRacePlanConfig() {
     
     // Show modal
     modal.style.display = 'block';
+}
+
+// Show lineup selector modal
+function showFixedLineupSelector() {
+    const selectorModal = document.createElement('div');
+    selectorModal.id = 'fixedLineupSelectorModal';
+    selectorModal.className = 'modal';
+    selectorModal.innerHTML = `
+        <div class="modal-content lineup-selector">
+            <span class="close">&times;</span>
+            <h2>Select Fixed Lineups</h2>
+            <p>Choose lineups that must be included in every race plan:</p>
+            <div class="lineup-selector-list">
+                ${savedLineups.map((lineup, index) => `
+                    <div class="lineup-selector-item">
+                        <input type="checkbox" id="lineup_${index}" value="${index}" 
+                               ${raceConfig.fixedLineups.includes(index) ? 'checked' : ''}>
+                        <label for="lineup_${index}" class="lineup-label">
+                            <div class="lineup-header">
+                                <strong>Lineup ${index + 1}</strong>
+                                <span class="lineup-score">Score: ${lineup.ttSum.toFixed(1)}</span>
+                            </div>
+                            <div class="lineup-stats">
+                                Weight Diff: ${lineup.weightDiff.toFixed(1)}kg | 
+                                M/F: ${lineup.maleCount}/${lineup.femaleCount}
+                            </div>
+                        </label>
+                    </div>
+                `).join('')}
+            </div>
+            <div class="modal-actions">
+                <button id="applyFixedLineups" class="primary">Apply Selection</button>
+                <button id="clearFixedLineups" class="secondary">Clear All</button>
+                <button id="cancelFixedLineups" class="secondary">Cancel</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(selectorModal);
+    
+    // Event listeners
+    selectorModal.querySelector('.close').addEventListener('click', () => {
+        document.body.removeChild(selectorModal);
+    });
+    
+    selectorModal.querySelector('#cancelFixedLineups').addEventListener('click', () => {
+        document.body.removeChild(selectorModal);
+    });
+    
+    selectorModal.querySelector('#clearFixedLineups').addEventListener('click', () => {
+        // Uncheck all checkboxes
+        selectorModal.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+            cb.checked = false;
+        });
+    });
+    
+    selectorModal.querySelector('#applyFixedLineups').addEventListener('click', () => {
+        // Get selected lineup indices
+        const selectedCheckboxes = selectorModal.querySelectorAll('input[type="checkbox"]:checked');
+        raceConfig.fixedLineups = Array.from(selectedCheckboxes).map(cb => parseInt(cb.value));
+        
+        // Update the display in the main modal
+        updateFixedLineupsDisplay();
+        
+        document.body.removeChild(selectorModal);
+    });
+    
+    // Show modal
+    selectorModal.style.display = 'block';
+}
+
+// Update the fixed lineups display in the main config modal
+function updateFixedLineupsDisplay() {
+    const countDisplay = document.getElementById('fixedLineupsCount');
+    const listDisplay = document.getElementById('fixedLineupsList');
+    
+    if (!countDisplay || !listDisplay) return;
+    
+    const count = raceConfig.fixedLineups.length;
+    countDisplay.textContent = `${count} lineup${count !== 1 ? 's' : ''} selected`;
+    
+    if (count === 0) {
+        listDisplay.innerHTML = '';
+        return;
+    }
+    
+    listDisplay.innerHTML = `
+        <div class="fixed-lineups-preview">
+            ${raceConfig.fixedLineups.map(index => {
+                const lineup = savedLineups[index];
+                return `
+                    <div class="fixed-lineup-preview">
+                        <span class="lineup-name">Lineup ${index + 1}</span>
+                        <span class="lineup-score">Score: ${lineup.ttSum.toFixed(1)}</span>
+                        <button class="remove-fixed-lineup" onclick="removeFixedLineup(${index})">×</button>
+                    </div>
+                `;
+            }).join('')}
+        </div>
+    `;
+}
+
+// Remove a specific fixed lineup
+function removeFixedLineup(lineupIndex) {
+    raceConfig.fixedLineups = raceConfig.fixedLineups.filter(index => index !== lineupIndex);
+    updateFixedLineupsDisplay();
 }
 
 // Generate optimized race plans
@@ -119,21 +256,43 @@ function findOptimalRacePlans() {
     const numRaces = raceConfig.numRaces;
     const minRaces = raceConfig.minRacesPerPaddler;
     const maxIterations = raceConfig.maxIterations;
+    const fixedLineups = raceConfig.fixedLineups || [];
     
     console.log(`Generating race plans: ${numRaces} races, min ${minRaces} races per paddler`);
-    console.log(`Available lineups: ${savedLineups.length}`);
+    console.log(`Available lineups: ${savedLineups.length}, Fixed lineups: ${fixedLineups.length}`);
     
     const validPlans = [];
     let iterations = 0;
     
-    // Sort lineups by score for better results (higher scores first)
-    const sortedLineups = [...savedLineups].sort((a, b) => (b.ttSum || 0) - (a.ttSum || 0));
+    // Get fixed lineups and available lineups for remaining slots
+    const fixedLineupObjects = fixedLineups.map(index => savedLineups[index]);
+    const availableIndices = savedLineups.map((_, index) => index).filter(index => !fixedLineups.includes(index));
+    const availableLineups = availableIndices.map(index => savedLineups[index]);
     
-    // Generate race plan combinations more efficiently
-    if (numRaces === 1) {
-        // Simple case - just return top lineups
-        sortedLineups.slice(0, 10).forEach((lineup, index) => {
-            const plan = [lineup];
+    // Sort available lineups by score for better results (higher scores first)
+    const sortedAvailableIndices = availableIndices.sort((a, b) => (savedLineups[b].ttSum || 0) - (savedLineups[a].ttSum || 0));
+    const sortedAvailableLineups = sortedAvailableIndices.map(index => savedLineups[index]);
+    
+    const remainingRaces = numRaces - fixedLineups.length;
+    
+    if (remainingRaces === 0) {
+        // All races are fixed lineups
+        const plan = fixedLineupObjects;
+        const stats = calculateRacePlanStats(plan);
+        
+        if (isValidRacePlan(stats, minRaces)) {
+            validPlans.push({
+                id: generateUniqueId(),
+                races: plan,
+                stats: stats,
+                totalScore: stats.totalScore,
+                timestamp: new Date().toISOString()
+            });
+        }
+    } else if (remainingRaces === 1) {
+        // One remaining race to fill
+        sortedAvailableLineups.slice(0, Math.min(10, sortedAvailableLineups.length)).forEach(lineup => {
+            const plan = [...fixedLineupObjects, lineup];
             const stats = calculateRacePlanStats(plan);
             
             if (isValidRacePlan(stats, minRaces)) {
@@ -148,7 +307,7 @@ function findOptimalRacePlans() {
         });
     } else {
         // Multi-race optimization with constraint satisfaction
-        validPlans.push(...generateMultiRacePlans(sortedLineups, numRaces, minRaces, maxIterations));
+        validPlans.push(...generateMultiRacePlansWithFixed(fixedLineupObjects, sortedAvailableLineups, remainingRaces, minRaces, maxIterations));
     }
     
     console.log(`Generated ${validPlans.length} valid race plans`);
@@ -255,6 +414,93 @@ function generateMultiRacePlans(sortedLineups, numRaces, minRaces, maxIterations
         
         if (remainingIterations > 100) {
             generateExpandedCombinations(new Array(numRaces), 0);
+        }
+    }
+    
+    return validPlans;
+}
+
+// Generate multi-race plans with fixed lineups
+function generateMultiRacePlansWithFixed(fixedLineups, availableLineups, remainingRaces, minRaces, maxIterations) {
+    const validPlans = [];
+    let iterations = 0;
+    
+    // Use a more intelligent search strategy for remaining races
+    const topAvailableLineups = availableLineups.slice(0, Math.min(15, availableLineups.length));
+    
+    function generateRemainingCombinations(currentRemainingPlan, depth) {
+        if (iterations >= maxIterations) return;
+        iterations++;
+        
+        if (depth === remainingRaces) {
+            const fullPlan = [...fixedLineups, ...currentRemainingPlan];
+            const stats = calculateRacePlanStats(fullPlan);
+            
+            if (isValidRacePlan(stats, minRaces)) {
+                validPlans.push({
+                    id: generateUniqueId(),
+                    races: fullPlan,
+                    stats: stats,
+                    totalScore: stats.totalScore,
+                    timestamp: new Date().toISOString()
+                });
+            }
+            return;
+        }
+        
+        // Try different lineups for the current remaining race
+        for (let i = 0; i < topAvailableLineups.length && iterations < maxIterations; i++) {
+            const lineup = topAvailableLineups[i];
+            
+            // Allow reuse of lineups (same lineup can be used in multiple races)
+            currentRemainingPlan[depth] = lineup;
+            generateRemainingCombinations(currentRemainingPlan, depth + 1);
+        }
+    }
+    
+    // Start generation
+    generateRemainingCombinations(new Array(remainingRaces), 0);
+    
+    // If we haven't found many plans and have iterations left, try with more lineups
+    if (validPlans.length < 10 && iterations < maxIterations * 0.7) {
+        const expandedLineups = availableLineups.slice(0, Math.min(25, availableLineups.length));
+        const remainingIterations = maxIterations - iterations;
+        
+        function generateExpandedCombinations(currentRemainingPlan, depth) {
+            if (iterations >= maxIterations) return;
+            iterations++;
+            
+            if (depth === remainingRaces) {
+                const fullPlan = [...fixedLineups, ...currentRemainingPlan];
+                const stats = calculateRacePlanStats(fullPlan);
+                
+                if (isValidRacePlan(stats, minRaces)) {
+                    // Check if this plan is significantly different from existing ones
+                    const isDifferent = validPlans.every(existingPlan => 
+                        arePlansSignificantlyDifferent(fullPlan, existingPlan.races)
+                    );
+                    
+                    if (isDifferent) {
+                        validPlans.push({
+                            id: generateUniqueId(),
+                            races: fullPlan,
+                            stats: stats,
+                            totalScore: stats.totalScore,
+                            timestamp: new Date().toISOString()
+                        });
+                    }
+                }
+                return;
+            }
+            
+            for (let i = 0; i < expandedLineups.length && iterations < maxIterations; i++) {
+                currentRemainingPlan[depth] = expandedLineups[i];
+                generateExpandedCombinations(currentRemainingPlan, depth + 1);
+            }
+        }
+        
+        if (remainingIterations > 100) {
+            generateExpandedCombinations(new Array(remainingRaces), 0);
         }
     }
     
@@ -464,24 +710,32 @@ function viewRacePlanDetails(planId) {
                 </div>
             </div>
             <div class="races-detail">
-                ${plan.races.map((race, index) => `
+                ${plan.races.map((race, index) => {
+                    // Get sit-out paddlers for this race
+                    const raceParticipantIds = new Set(race.paddlersInBoat.map(p => p.id));
+                    const sitOutPaddlers = paddlers.filter(p => !raceParticipantIds.has(p.id));
+                    
+                    return `
                     <div class="race-detail-item">
                         <h3>Race ${index + 1} (Score: ${race.ttSum.toFixed(1)})</h3>
-                        <div class="race-lineup-compact">
-                            <div class="boat-positions">
-                                ${race.paddlersInBoat.map((paddler, idx) => `
-                                    <span class="position-paddler">
-                                        ${Math.floor(idx / 2) + 1}${idx % 2 === 0 ? 'L' : 'R'}: ${paddler.name}
+                        <div class="race-sitout-display">
+                            <h4>Sit-out Paddlers (${sitOutPaddlers.length}):</h4>
+                            <div class="sitout-paddlers">
+                                ${sitOutPaddlers.length > 0 ? sitOutPaddlers.map(paddler => `
+                                    <span class="sitout-paddler">
+                                        ${paddler.name} (${paddler.side.toUpperCase()}${paddler.ttResults ? `, TT: ${paddler.ttResults}` : ''})
                                     </span>
-                                `).join('')}
+                                `).join('') : '<span class="no-sitouts">All paddlers racing</span>'}
                             </div>
                         </div>
                         <div class="race-stats">
+                            <span>Racing: ${race.paddlersInBoat.length}/${paddlers.length}</span>
+                            <span>Sitting out: ${sitOutPaddlers.length}</span>
                             <span>Weight Diff: ${race.weightDiff.toFixed(1)}kg</span>
                             <span>M/F: ${race.maleCount}/${race.femaleCount}</span>
                         </div>
                     </div>
-                `).join('')}
+                `;}).join('')}
             </div>
             <div class="participation-summary">
                 <h3>Paddler Participation Summary</h3>
